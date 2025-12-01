@@ -56,9 +56,13 @@ export async function deleteAgent(agentId: string) {
 }
 
 export const VOICES = [
-  { id: '11labs-Adrian', name: 'Adrian - Profundo' },
-  { id: '11labs-Alice', name: 'Alice - Femenino' },
-  { id: '11labs-Aria', name: 'Aria - Inteligente' },
+  { id: '11labs-Rachel', name: 'Rachel - Cálida y Natural (Femenino)' },
+  { id: '11labs-Matilda', name: 'Matilda - Profesional y Clara (Femenino)' },
+  { id: '11labs-Bella', name: 'Bella - Amigable y Cercana (Femenino)' },
+  { id: '11labs-Charlotte', name: 'Charlotte - Dulce y Empática (Femenino)' },
+  { id: '11labs-Daniel', name: 'Daniel - Seguro y Confiable (Masculino)' },
+  { id: '11labs-Josh', name: 'Josh - Joven y Dinámico (Masculino)' },
+  { id: '11labs-Antoni', name: 'Antoni - Versátil y Natural (Masculino)' },
 ];
 
 export const LANGUAGES = [

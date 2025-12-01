@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Trash2, Play, Phone, Plus, X, Settings, TestTube } from 'lucide-react';
-import { getAgent, updateAgent, deleteAgent, LANGUAGES } from '../services/agentService';
+import { ArrowLeft, Save, Trash2, Phone, Plus, X, Settings, MessageSquare, Edit, ChevronDown, ChevronUp } from 'lucide-react';
+import { getAgent, updateAgent, deleteAgent, VOICES, LANGUAGES } from '../services/agentService';
 import { updateRetellAgent, deleteRetellAgent } from '../services/retellService';
 import { Agent } from '../types';
-
-interface Voice {
-  voice_id: string;
-  voice_name: string;
-  provider: string;
-  gender?: string;
-  language?: string;
-  accent?: string;
-}
 
 interface Transfer {
   name: string;
@@ -27,9 +18,7 @@ export default function AgentDetail() {
   const [activeTab, setActiveTab] = useState<'config' | 'playground' | 'transfers'>('config');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [loadingVoices, setLoadingVoices] = useState(false);
-  const [availableVoices, setAvailableVoices] = useState<Voice[]>([]);
-  const [filteredVoices, setFilteredVoices] = useState<Voice[]>([]);
+  const [showPromptEditor, setShowPromptEditor] = useState(false);
 
   const [name, setName] = useState('');
   const [prompt, setPrompt] = useState('');
@@ -37,18 +26,9 @@ export default function AgentDetail() {
   const [language, setLanguage] = useState('');
   const [transfers, setTransfers] = useState<Transfer[]>([]);
 
-  const [voiceFilter, setVoiceFilter] = useState({ provider: '', gender: '', language: '' });
-  const [testPhoneNumber, setTestPhoneNumber] = useState('');
-  const [playgroundMessage, setPlaygroundMessage] = useState('');
-
   useEffect(() => {
     loadAgent();
-    loadVoices();
   }, [agentId]);
-
-  useEffect(() => {
-    filterVoices();
-  }, [voiceFilter, availableVoices, language]);
 
   async function loadAgent() {
     if (!agentId) return;
@@ -67,47 +47,6 @@ export default function AgentDetail() {
     }
   }
 
-  async function loadVoices() {
-    setLoadingVoices(true);
-    try {
-      const response = await fetch('https://api.retellai.com/list-voices', {
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_RETELL_API_KEY}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableVoices(data.voices || []);
-      }
-    } catch (err) {
-      console.error('Error loading voices:', err);
-    } finally {
-      setLoadingVoices(false);
-    }
-  }
-
-  function filterVoices() {
-    let filtered = [...availableVoices];
-
-    if (voiceFilter.provider) {
-      filtered = filtered.filter(v => v.provider.toLowerCase().includes(voiceFilter.provider.toLowerCase()));
-    }
-
-    if (voiceFilter.gender) {
-      filtered = filtered.filter(v => v.gender?.toLowerCase() === voiceFilter.gender.toLowerCase());
-    }
-
-    if (language && language !== 'multi') {
-      const langCode = language.split('-')[0];
-      filtered = filtered.filter(v =>
-        v.language?.toLowerCase().includes(langCode.toLowerCase()) ||
-        v.voice_id.toLowerCase().includes(langCode)
-      );
-    }
-
-    setFilteredVoices(filtered);
-  }
-
   async function handleSave() {
     if (!agent || !agentId) return;
     setSaving(true);
@@ -116,6 +55,7 @@ export default function AgentDetail() {
       await updateRetellAgent(agent.retell_agent_id, { name, prompt: updatedPrompt, voiceId, language });
       await updateAgent(agentId, { name, prompt: updatedPrompt, voice_id: voiceId, language, transfers });
       await loadAgent();
+      setShowPromptEditor(false);
       alert('Agente actualizado correctamente');
     } catch (err) {
       alert('Error al guardar: ' + (err instanceof Error ? err.message : 'Error desconocido'));
@@ -129,8 +69,9 @@ export default function AgentDetail() {
 
     const transferSection = `
 
-Transferencias disponibles:
-${transfers.map((t, i) => `${i + 1}. ${t.name} (${t.phone}): ${t.description}`).join('\n')}
+## Transferencias Disponibles
+
+${transfers.map((t) => `- **${t.name}** (${t.phone}): ${t.description}`).join('\n')}
 
 Cuando un paciente necesite hablar con una de estas personas o departamentos, explica que puedes transferir la llamada y pregunta si desea que lo hagas ahora.`;
 
@@ -162,14 +103,6 @@ Cuando un paciente necesite hablar con una de estas personas o departamentos, ex
     setTransfers(updated);
   }
 
-  async function handleTestCall() {
-    if (!testPhoneNumber || !agent) {
-      alert('Por favor ingresa un número de teléfono');
-      return;
-    }
-    alert('Funcionalidad de llamada de prueba pendiente de implementación con Retell API');
-  }
-
   if (loading || !agent) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
@@ -178,7 +111,7 @@ Cuando un paciente necesite hablar con una de estas personas o departamentos, ex
     );
   }
 
-  const selectedVoice = availableVoices.find(v => v.voice_id === voiceId);
+  const selectedVoice = VOICES.find(v => v.id === voiceId);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
@@ -201,7 +134,7 @@ Cuando un paciente necesite hablar con una de estas personas o departamentos, ex
               className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
               <Save className="w-4 h-4" />
-              {saving ? 'Guardando...' : 'Guardar'}
+              {saving ? 'Guardando...' : 'Guardar Cambios'}
             </button>
             <button onClick={handleDelete} className="text-red-600 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors">
               <Trash2 className="w-5 h-5" />
@@ -231,7 +164,7 @@ Cuando un paciente necesite hablar con una de estas personas o departamentos, ex
                 : 'bg-white text-gray-600 border-2 border-transparent hover:border-gray-300'
             }`}
           >
-            <TestTube className="w-5 h-5" />
+            <MessageSquare className="w-5 h-5" />
             Playground
           </button>
           <button
@@ -282,108 +215,103 @@ Cuando un paciente necesite hablar con una de estas personas o departamentos, ex
                       ))}
                     </select>
                   </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Voz</label>
+                      <select
+                        value={voiceId}
+                        onChange={(e) => setVoiceId(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      >
+                        {VOICES.map((v) => (
+                          <option key={v.id} value={v.id}>{v.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                      <span className={`inline-flex px-4 py-3 rounded-lg text-sm font-medium ${
+                        agent.enabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {agent.enabled ? '✓ Activo' : '✗ Inactivo'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold mb-2">Prompt del Sistema</h2>
-                <p className="text-sm text-gray-600 mb-4">
-                  Instrucciones que guían el comportamiento del agente durante las llamadas.
-                </p>
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={25}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-600 resize-y"
-                  style={{ minHeight: '500px', background: '#fafafa' }}
-                />
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">Prompt del Sistema</h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Instrucciones que guían el comportamiento del agente
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowPromptEditor(!showPromptEditor)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                    {showPromptEditor ? 'Ocultar' : 'Editar Prompt'}
+                    {showPromptEditor ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                {!showPromptEditor ? (
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <p className="text-sm text-gray-600 text-center">
+                      El prompt está configurado y funcionando. Haz clic en "Editar Prompt" para verlo o modificarlo.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <textarea
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      rows={25}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-600 resize-y"
+                      style={{ minHeight: '500px', background: '#fafafa' }}
+                    />
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
+                      <p className="font-medium mb-1">💡 Formato del Prompt:</p>
+                      <ul className="list-disc list-inside space-y-1 text-blue-800">
+                        <li>Usa formato Markdown con títulos (# y ##)</li>
+                        <li>Escribe todo con letras, evita números y símbolos</li>
+                        <li>Usa viñetas (-) en lugar de listas numeradas</li>
+                        <li>Escribe números como palabras (uno, dos, tres...)</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="space-y-6">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold mb-4">Configuración de Voz</h2>
-
-                {selectedVoice && (
-                  <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-sm font-medium text-gray-700">Voz Actual:</p>
-                    <p className="text-lg font-bold text-blue-900">{selectedVoice.voice_name}</p>
-                    <div className="mt-2 space-y-1 text-sm">
-                      <p className="text-gray-600">Proveedor: <span className="font-medium">{selectedVoice.provider}</span></p>
-                      {selectedVoice.gender && <p className="text-gray-600">Género: <span className="font-medium">{selectedVoice.gender}</span></p>}
-                      {selectedVoice.accent && <p className="text-gray-600">Acento: <span className="font-medium">{selectedVoice.accent}</span></p>}
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Proveedor</label>
-                    <select
-                      value={voiceFilter.provider}
-                      onChange={(e) => setVoiceFilter({ ...voiceFilter, provider: e.target.value })}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    >
-                      <option value="">Todos</option>
-                      <option value="elevenlabs">ElevenLabs</option>
-                      <option value="openai">OpenAI</option>
-                      <option value="deepgram">Deepgram</option>
-                      <option value="playht">PlayHT</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Género</label>
-                    <select
-                      value={voiceFilter.gender}
-                      onChange={(e) => setVoiceFilter({ ...voiceFilter, gender: e.target.value })}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    >
-                      <option value="">Todos</option>
-                      <option value="male">Masculino</option>
-                      <option value="female">Femenino</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      Voces Disponibles {loadingVoices && <span className="text-blue-600">(Cargando...)</span>}
-                    </label>
-                    <select
-                      value={voiceId}
-                      onChange={(e) => setVoiceId(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 max-h-60"
-                      size={8}
-                    >
-                      {(filteredVoices.length > 0 ? filteredVoices : availableVoices).map((v) => (
-                        <option key={v.voice_id} value={v.voice_id}>
-                          {v.voice_name} ({v.provider})
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-gray-500 mt-2">
-                      {filteredVoices.length || availableVoices.length} voces disponibles
-                    </p>
+              {selectedVoice && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Voz Seleccionada</h3>
+                  <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+                    <p className="text-lg font-bold text-blue-900">{selectedVoice.name}</p>
+                    <p className="text-sm text-blue-700 mt-1">ElevenLabs Premium Voice</p>
                   </div>
                 </div>
-              </div>
+              )}
 
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 p-6">
-                <h3 className="font-semibold text-blue-900 mb-2">Estado del Agente</h3>
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 p-6">
+                <h3 className="font-semibold text-gray-900 mb-3">Información del Agente</h3>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-blue-700">Estado:</span>
-                    <span className={`font-medium ${agent.enabled ? 'text-green-600' : 'text-red-600'}`}>
-                      {agent.enabled ? '✓ Activo' : '✗ Inactivo'}
-                    </span>
+                  <div className="flex justify-between py-2 border-b border-gray-200">
+                    <span className="text-gray-600">Creado:</span>
+                    <span className="text-gray-900 font-medium">{new Date(agent.created_at).toLocaleDateString('es-ES')}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-blue-700">Creado:</span>
-                    <span className="text-blue-900 font-medium">{new Date(agent.created_at).toLocaleDateString()}</span>
+                  <div className="flex justify-between py-2 border-b border-gray-200">
+                    <span className="text-gray-600">Actualizado:</span>
+                    <span className="text-gray-900 font-medium">{new Date(agent.updated_at).toLocaleDateString('es-ES')}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-blue-700">Actualizado:</span>
-                    <span className="text-blue-900 font-medium">{new Date(agent.updated_at).toLocaleDateString()}</span>
+                  <div className="flex justify-between py-2">
+                    <span className="text-gray-600">Transferencias:</span>
+                    <span className="text-gray-900 font-medium">{transfers.length}</span>
                   </div>
                 </div>
               </div>
@@ -393,73 +321,35 @@ Cuando un paciente necesite hablar con una de estas personas o departamentos, ex
 
         {activeTab === 'playground' && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <h2 className="text-2xl font-bold mb-2">Playground de Pruebas</h2>
+            <h2 className="text-2xl font-bold mb-2">Chat de Prueba con el Agente</h2>
             <p className="text-gray-600 mb-6">
-              Prueba tu agente en tiempo real realizando una llamada de prueba
+              Conversa con tu agente en tiempo real para probar sus respuestas
             </p>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div>
-                <h3 className="font-semibold text-lg mb-4">Llamada de Prueba</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Número de Teléfono
-                    </label>
-                    <input
-                      type="tel"
-                      value={testPhoneNumber}
-                      onChange={(e) => setTestPhoneNumber(e.target.value)}
-                      placeholder="+34 600 123 456"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Incluye código de país</p>
-                  </div>
-
-                  <button
-                    onClick={handleTestCall}
-                    className="w-full flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-4 rounded-lg font-semibold hover:bg-green-700 transition-colors"
-                  >
-                    <Phone className="w-5 h-5" />
-                    Iniciar Llamada de Prueba
-                  </button>
-
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
-                    <p className="font-medium">Nota:</p>
-                    <p>Se realizará una llamada real al número proporcionado. Asegúrate de tener el agente configurado correctamente.</p>
-                  </div>
-                </div>
+            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-8 text-center">
+              <MessageSquare className="w-16 h-16 mx-auto mb-4 text-yellow-600" />
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Funcionalidad en Desarrollo</h3>
+              <p className="text-gray-700 mb-4">
+                El playground de chat web estará disponible próximamente. Por ahora, puedes probar tu agente realizando llamadas reales desde el dashboard de Retell AI.
+              </p>
+              <div className="bg-white rounded-lg p-4 text-left max-w-2xl mx-auto">
+                <p className="text-sm font-medium text-gray-900 mb-2">Mientras tanto, puedes:</p>
+                <ul className="list-disc list-inside space-y-2 text-sm text-gray-700">
+                  <li>Editar la configuración del agente en la pestaña "Configuración"</li>
+                  <li>Agregar transferencias telefónicas en la pestaña "Transferencias"</li>
+                  <li>Visitar el dashboard de Retell AI para hacer pruebas de llamadas reales</li>
+                  <li>Revisar el prompt del agente para ajustar su comportamiento</li>
+                </ul>
               </div>
-
-              <div>
-                <h3 className="font-semibold text-lg mb-4">Vista Previa de Configuración</h3>
-                <div className="bg-gray-50 rounded-lg p-4 space-y-3 text-sm">
-                  <div>
-                    <span className="text-gray-600">Agente:</span>
-                    <span className="ml-2 font-medium">{name}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Voz:</span>
-                    <span className="ml-2 font-medium">{selectedVoice?.voice_name || voiceId}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Idioma:</span>
-                    <span className="ml-2 font-medium">{LANGUAGES.find(l => l.id === language)?.name}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Tipo:</span>
-                    <span className="ml-2 font-medium">
-                      {agent.agent_type === 'inbound' ? 'Entrantes' : 'Salientes'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-900">
-                    <strong>Consejo:</strong> Prueba diferentes escenarios de conversación para verificar que el agente responde correctamente según tu prompt.
-                  </p>
-                </div>
-              </div>
+              <a
+                href="https://beta.retellai.com/dashboard"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              >
+                Ir al Dashboard de Retell AI
+                <ArrowLeft className="w-4 h-4 rotate-180" />
+              </a>
             </div>
           </div>
         )}
@@ -491,15 +381,15 @@ Cuando un paciente necesite hablar con una de estas personas o departamentos, ex
             ) : (
               <div className="space-y-4">
                 {transfers.map((transfer, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-6 relative">
+                  <div key={index} className="border border-gray-200 rounded-lg p-6 relative hover:border-purple-300 transition-colors">
                     <button
                       onClick={() => removeTransfer(index)}
-                      className="absolute top-4 right-4 text-red-600 hover:text-red-700"
+                      className="absolute top-4 right-4 text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors"
                     >
                       <X className="w-5 h-5" />
                     </button>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pr-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pr-12">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Nombre / Departamento
@@ -547,9 +437,10 @@ Cuando un paciente necesite hablar con una de estas personas o departamentos, ex
             <div className="mt-6 bg-purple-50 border border-purple-200 rounded-lg p-4 text-sm text-purple-900">
               <p className="font-medium mb-2">ℹ️ Información sobre Transferencias</p>
               <ul className="list-disc list-inside space-y-1 text-purple-800">
-                <li>Las transferencias se agregarán automáticamente al prompt del agente</li>
-                <li>El agente preguntará antes de realizar una transferencia</li>
-                <li>Asegúrate de que los números incluyan el código de país completo</li>
+                <li>Las transferencias se agregarán automáticamente al prompt del agente al guardar</li>
+                <li>El agente preguntará al paciente antes de realizar una transferencia</li>
+                <li>Asegúrate de que los números incluyan el código de país completo (ej: +34)</li>
+                <li>Escribe los números con espacios para mejor legibilidad</li>
               </ul>
             </div>
           </div>
