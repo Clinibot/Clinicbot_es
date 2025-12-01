@@ -154,6 +154,38 @@ export async function createRetellLLM(
   return data.llm_id;
 }
 
+export async function updateRetellLLM(
+  llmId: string,
+  prompt: string
+): Promise<void> {
+  console.log('=== Updating Retell LLM ===');
+  console.log('LLM ID:', llmId);
+  console.log('New prompt length:', prompt.length);
+
+  const payload = {
+    general_prompt: prompt,
+  };
+
+  const response = await fetch(`https://api.retellai.com/update-retell-llm/${llmId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${RETELL_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  console.log('LLM Update Response Status:', response.status);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('❌ Retell LLM Update API error:', errorText);
+    throw new Error(`Failed to update Retell LLM: ${response.status} ${errorText}`);
+  }
+
+  console.log('✅ LLM updated successfully');
+}
+
 export async function createRetellAgent(
   name: string,
   prompt: string,
@@ -281,18 +313,24 @@ export async function updateRetellAgent(
     language?: string;
   }
 ): Promise<void> {
+  if (updates.prompt) {
+    const agent = await getRetellAgent(agentId);
+
+    if (!agent.response_engine?.llm_id) {
+      throw new Error('No se pudo obtener el llm_id del agente');
+    }
+
+    await updateRetellLLM(agent.response_engine.llm_id, updates.prompt);
+  }
+
   const payload: UpdateAgentPayload = {};
 
   if (updates.name) payload.agent_name = updates.name;
   if (updates.voiceId) payload.voice_id = updates.voiceId;
   if (updates.language) payload.language = updates.language;
 
-  if (updates.prompt) {
-    payload.response_engine = {
-      type: 'retell-llm',
-      openai_model_name: 'gpt-4o-mini',
-      general_prompt: updates.prompt,
-    };
+  if (Object.keys(payload).length === 0) {
+    return;
   }
 
   const response = await fetch(`https://api.retellai.com/update-agent/${agentId}`, {
