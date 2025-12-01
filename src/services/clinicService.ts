@@ -40,6 +40,27 @@ export async function getUserClinics() {
   return data;
 }
 
+export async function updateClinic(clinicId: string, updates: Partial<Clinic>) {
+  const { data, error } = await supabase
+    .from('clinics')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', clinicId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteClinic(clinicId: string) {
+  const { error } = await supabase
+    .from('clinics')
+    .delete()
+    .eq('id', clinicId);
+
+  if (error) throw error;
+}
+
 export async function scrapeClinicWebsite(websiteUrl: string): Promise<ScrapedClinicInfo> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('User not authenticated');

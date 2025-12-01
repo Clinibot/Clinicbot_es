@@ -47,7 +47,7 @@ export async function createRetellLLM(
   const response = await fetch(`${RETELL_API_URL}/create-retell-llm`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${RETELL_API_KEY}`,
+      'Authorization': RETELL_API_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
@@ -56,6 +56,7 @@ export async function createRetellLLM(
   if (!response.ok) {
     const errorText = await response.text();
     console.error('Retell LLM API error:', errorText);
+    console.error('Request payload:', JSON.stringify(payload, null, 2));
     throw new Error(`Failed to create Retell LLM: ${response.status} ${errorText}`);
   }
 
@@ -84,7 +85,7 @@ export async function createRetellAgent(
   const response = await fetch(`${RETELL_API_URL}/create-agent`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${RETELL_API_KEY}`,
+      'Authorization': RETELL_API_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
@@ -93,6 +94,7 @@ export async function createRetellAgent(
   if (!response.ok) {
     const errorText = await response.text();
     console.error('Retell Agent API error:', errorText);
+    console.error('Request payload:', JSON.stringify(payload, null, 2));
     throw new Error(`Failed to create Retell agent: ${response.status} ${errorText}`);
   }
 
@@ -126,7 +128,7 @@ export async function updateRetellAgent(
   const response = await fetch(`${RETELL_API_URL}/update-agent/${agentId}`, {
     method: 'PATCH',
     headers: {
-      'Authorization': `Bearer ${RETELL_API_KEY}`,
+      'Authorization': RETELL_API_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
@@ -143,7 +145,7 @@ export async function deleteRetellAgent(agentId: string): Promise<void> {
   const response = await fetch(`${RETELL_API_URL}/delete-agent/${agentId}`, {
     method: 'DELETE',
     headers: {
-      'Authorization': `Bearer ${RETELL_API_KEY}`,
+      'Authorization': RETELL_API_KEY,
     },
   });
 
@@ -158,7 +160,7 @@ export async function getRetellAgent(agentId: string): Promise<any> {
   const response = await fetch(`${RETELL_API_URL}/get-agent/${agentId}`, {
     method: 'GET',
     headers: {
-      'Authorization': `Bearer ${RETELL_API_KEY}`,
+      'Authorization': RETELL_API_KEY,
     },
   });
 

@@ -56,6 +56,16 @@ export default function CreateAgent() {
       parts.push(`Horarios: ${JSON.stringify(clinic.opening_hours)}`);
     }
     if (clinic.additional_info) parts.push(`Información adicional: ${clinic.additional_info}`);
+
+    if (clinic.google_calendars && clinic.google_calendars.length > 0) {
+      parts.push('\nCalendarios disponibles para citas:');
+      clinic.google_calendars.forEach((cal: any) => {
+        if (cal.enabled) {
+          parts.push(`- ${cal.name} (${cal.serviceType}): ${cal.email}`);
+        }
+      });
+    }
+
     return parts.join('\n');
   }
 
@@ -100,11 +110,19 @@ Tareas principales
 
    Luego pide el teléfono de contacto para anotarlo sin repetirlo.
 
-3. Si pide cita:
-   Tú nunca agendas, ni reservas, ni haces gestiones administrativas.
-   Siempre responde con naturalidad:
-   "Las citas se reservan desde la web de la clínica, ahí puedes elegir el día y la hora que te vaya mejor. Así lo haces en un momento."
-   Solo lo dices una vez por llamada.
+3. Gestión de citas (si hay calendarios configurados):
+   Si hay calendarios disponibles arriba, puedes:
+   - Consultar disponibilidad en los calendarios de Google
+   - Reservar citas nuevas
+   - Anular citas existentes
+   - Reagendar citas
+
+   Pregunta por el servicio que necesita para usar el calendario correcto.
+   Pregunta por fecha y hora preferida.
+   Confirma nombre completo, teléfono y email del paciente.
+
+   Si NO hay calendarios configurados:
+   "Las citas se reservan desde la web de la clínica, ahí puedes elegir el día y la hora que te vaya mejor."
 
 4. Despedida:
    Antes de cerrar la llamada, pregunta:

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Phone } from 'lucide-react';
-import { getClinic } from '../services/clinicService';
+import { ArrowLeft, Plus, Phone, Edit, Trash2, Calendar } from 'lucide-react';
+import { getClinic, deleteClinic } from '../services/clinicService';
 import { getClinicAgents } from '../services/agentService';
 import { Clinic, Agent } from '../types';
 
@@ -30,6 +30,19 @@ export default function ClinicDetail() {
     }
   }
 
+  async function handleDelete() {
+    if (!clinicId || !clinic) return;
+    const confirmed = confirm(`¿Estás seguro de que deseas eliminar la clínica "${clinic.name}"? Esta acción no se puede deshacer.`);
+    if (!confirmed) return;
+
+    try {
+      await deleteClinic(clinicId);
+      navigate('/dashboard');
+    } catch (err) {
+      alert('Error al eliminar la clínica');
+    }
+  }
+
   if (loading || !clinic) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
@@ -53,10 +66,47 @@ export default function ClinicDetail() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="bg-white rounded-2xl shadow-lg border border-blue-100 p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Información</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-900">Información</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => navigate(`/clinic/${clinicId}/edit`)}
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                  title="Editar clínica"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                  title="Eliminar clínica"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
             <div className="space-y-3 text-sm">
               {clinic.phone && <p><span className="font-medium">Tel:</span> {clinic.phone}</p>}
               {clinic.address && <p><span className="font-medium">Dir:</span> {clinic.address}</p>}
+              {clinic.city && <p><span className="font-medium">Ciudad:</span> {clinic.city}</p>}
+              {clinic.website && <p><span className="font-medium">Web:</span> <a href={clinic.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{clinic.website}</a></p>}
+              {clinic.specialties && clinic.specialties.length > 0 && (
+                <div>
+                  <p className="font-medium mb-1">Especialidades:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {clinic.specialties.map((spec, idx) => (
+                      <span key={idx} className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">{spec}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={() => navigate(`/clinic/${clinicId}/calendars`)}
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+              >
+                <Calendar className="w-5 h-5" />
+                Gestionar Calendarios
+              </button>
             </div>
           </div>
 

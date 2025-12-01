@@ -4,7 +4,9 @@ import { useAuth } from './contexts/AuthContext';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import CreateClinic from './pages/CreateClinic';
+import EditClinic from './pages/EditClinic';
 import ClinicDetail from './pages/ClinicDetail';
+import ManageCalendars from './pages/ManageCalendars';
 import CreateAgent from './pages/CreateAgent';
 import AgentDetail from './pages/AgentDetail';
 
@@ -82,6 +84,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <ClinicDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clinic/:clinicId/edit"
+            element={
+              <ProtectedRoute>
+                <EditClinic />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clinic/:clinicId/calendars"
+            element={
+              <ProtectedRoute>
+                <ManageCalendars />
               </ProtectedRoute>
             }
           />
