@@ -19,9 +19,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const response = await fetch('https://api.cal.com/v1/event-types', {
+    // Cal.com API usa el parámetro apiKey en la URL
+    const url = `https://api.cal.com/v1/event-types?apiKey=${encodeURIComponent(apiKey)}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
     });

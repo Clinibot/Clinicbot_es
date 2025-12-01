@@ -108,11 +108,12 @@ export async function checkAvailability(
   startDate: string,
   endDate: string
 ): Promise<any> {
-  const url = `https://api.cal.com/v1/slots/available?eventTypeId=${eventTypeId}&startTime=${startDate}&endTime=${endDate}`;
+  // Cal.com API usa el parámetro apiKey en la URL
+  const url = `https://api.cal.com/v1/slots/available?eventTypeId=${eventTypeId}&startTime=${startDate}&endTime=${endDate}&apiKey=${encodeURIComponent(apiKey)}`;
 
   const response = await fetch(url, {
+    method: 'GET',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
   });
@@ -130,10 +131,12 @@ export async function createBooking(
   start: string,
   responses: { name: string; email: string; phone?: string }
 ): Promise<any> {
-  const response = await fetch('https://api.cal.com/v1/bookings', {
+  // Cal.com API usa el parámetro apiKey en la URL
+  const url = `https://api.cal.com/v1/bookings?apiKey=${encodeURIComponent(apiKey)}`;
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
