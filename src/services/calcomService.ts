@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { updateRetellAgent, getRetellAgent } from './retellService';
 import { getAgent } from './agentService';
+import { buildAgentTools } from './agentToolsService';
 
 export interface CalcomConfig {
   id: string;
@@ -201,7 +202,7 @@ ${eventList}
 }
 
 /**
- * Actualiza el prompt del agente para incluir instrucciones de Cal.com
+ * Actualiza el prompt y las tools del agente para incluir Cal.com
  */
 export async function updateAgentPromptWithCalcom(agentId: string): Promise<void> {
   try {
@@ -236,9 +237,13 @@ export async function updateAgentPromptWithCalcom(agentId: string): Promise<void
       updatedPrompt = currentPrompt + calcomInstructions;
     }
 
-    // Actualizar el prompt en Retell AI
+    // Construir las tools actualizadas (incluye transferencias + Cal.com)
+    const tools = await buildAgentTools(agent.clinic_id, agentId, agent.transfers || []);
+
+    // Actualizar el prompt Y las tools en Retell AI
     await updateRetellAgent(agent.retell_agent_id, {
       prompt: updatedPrompt,
+      tools,
     });
 
     // Actualizar también en la base de datos local
@@ -250,9 +255,9 @@ export async function updateAgentPromptWithCalcom(agentId: string): Promise<void
       })
       .eq('id', agentId);
 
-    console.log('✅ Prompt del agente actualizado con instrucciones de Cal.com');
+    console.log('✅ Prompt y tools del agente actualizados con Cal.com');
   } catch (error) {
-    console.error('Error al actualizar prompt del agente:', error);
+    console.error('Error al actualizar agente con Cal.com:', error);
     throw error;
   }
 }
