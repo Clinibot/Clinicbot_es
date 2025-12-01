@@ -124,6 +124,21 @@ export async function createRetellAgent(
     const errorText = await response.text();
     console.error('Retell Agent API error:', errorText);
     console.error('Request payload:', JSON.stringify(payload, null, 2));
+
+    if (response.status === 404) {
+      throw new Error(
+        'Error 404: El endpoint /create-agent no está disponible. ' +
+        'Posibles causas:\n' +
+        '1. Tu cuenta de Retell AI podría necesitar verificación o activación\n' +
+        '2. La API key podría no tener los permisos necesarios\n' +
+        '3. Tu plan podría no incluir acceso a la API de agentes\n\n' +
+        'Por favor verifica tu cuenta en https://beta.retellai.com/dashboard y asegúrate de que:\n' +
+        '- Tu cuenta esté completamente activada\n' +
+        '- Tu API key tenga permisos completos\n' +
+        '- Tu plan incluya acceso a la API de creación de agentes'
+      );
+    }
+
     throw new Error(`Failed to create Retell agent: ${response.status} ${errorText}`);
   }
 
