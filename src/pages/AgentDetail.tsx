@@ -39,8 +39,8 @@ export default function AgentDetail() {
         setAgent(data);
         setName(data.name);
         setPrompt(data.prompt);
-        setVoiceId(data.voice_id);
-        setLanguage(data.language);
+        setVoiceId(data.voice_id || VOICES[0].id);
+        setLanguage(data.language || LANGUAGES[0].id);
         setTransfers(data.transfers || []);
       }
     } finally {

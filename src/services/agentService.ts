@@ -56,22 +56,22 @@ export async function deleteAgent(agentId: string) {
 }
 
 export const VOICES = [
-  { id: '11labs-UOIqAnmS11Reiei1Ytkc', name: 'Carolina - Voz Española (Femenino)' },
-  { id: '11labs-kwNLkNjbQHMw9YUFZsHI', name: 'Alejandra - Voz Española (Femenino)' },
-  { id: '11labs-gD1IexrzCvsXPHUuT0s3', name: 'Sara - Voz Española (Femenino)' },
-  { id: '11labs-v3V1d2rk6528UrLKRuy8', name: 'Susi - Voz Española (Femenino)' },
-  { id: '11labs-7QQzpAyzlKTVrRzQJmTE', name: 'Dani - Voz Española (Masculino)' },
-  { id: '11labs-HIYif4jehvc9P9A8DYbX', name: 'Pablo - Voz Española (Masculino)' },
-  { id: '11labs-851ejYcv2BoNPjrkw93G', name: 'Toni - Voz Española (Masculino)' },
+  { id: 'UOIqAnmS11Reiei1Ytkc', name: 'Carolina - Voz Española (Femenino)' },
+  { id: 'kwNLkNjbQHMw9YUFZsHI', name: 'Alejandra - Voz Española (Femenino)' },
+  { id: 'gD1IexrzCvsXPHUuT0s3', name: 'Sara - Voz Española (Femenino)' },
+  { id: 'v3V1d2rk6528UrLKRuy8', name: 'Susi - Voz Española (Femenino)' },
+  { id: '7QQzpAyzlKTVrRzQJmTE', name: 'Dani - Voz Española (Masculino)' },
+  { id: 'HIYif4jehvc9P9A8DYbX', name: 'Pablo - Voz Española (Masculino)' },
+  { id: '851ejYcv2BoNPjrkw93G', name: 'Toni - Voz Española (Masculino)' },
 ];
 
 export const LANGUAGES = [
-  { id: 'multi', name: 'Multi-idioma (Recomendado)' },
-  { id: 'es-ES', name: 'Español (España)' },
-  { id: 'es-419', name: 'Español (Latinoamérica)' },
-  { id: 'ca-ES', name: 'Català' },
-  { id: 'en-US', name: 'English (US)' },
-  { id: 'en-GB', name: 'English (UK)' },
+  { id: 'es', name: 'Español (Recomendado)' },
+  { id: 'en', name: 'English' },
+  { id: 'ca', name: 'Català' },
+  { id: 'fr', name: 'Français' },
+  { id: 'de', name: 'Deutsch' },
+  { id: 'pt', name: 'Português' },
 ];
 
 export const DEFAULT_PROMPT = `Eres Sofía, una recepcionista IA profesional y amable para una clínica médica. Tu objetivo es proporcionar un servicio de calidad al contestar llamadas, agendar citas, proporcionar información sobre servicios y transferir llamadas cuando sea necesario.

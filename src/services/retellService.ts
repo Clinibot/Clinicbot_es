@@ -375,8 +375,13 @@ export async function updateRetellAgent(
   if (updates.language) payload.language = updates.language;
 
   if (Object.keys(payload).length === 0) {
+    console.log('No agent fields to update (only LLM was updated)');
     return;
   }
+
+  console.log('=== Updating Retell Agent ===');
+  console.log('Agent ID:', agentId);
+  console.log('Update payload:', JSON.stringify(payload, null, 2));
 
   const response = await fetch(`https://api.retellai.com/update-agent/${agentId}`, {
     method: 'PATCH',
