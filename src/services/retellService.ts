@@ -1,15 +1,14 @@
 const RETELL_API_KEY = import.meta.env.VITE_RETELL_API_KEY;
-const RETELL_API_URL = 'https://api.retellai.com';
 
 export async function testRetellConnection(): Promise<void> {
   console.log('=== Testing Retell API connection ===');
   console.log('API Key:', RETELL_API_KEY?.substring(0, 15) + '...');
-  console.log('Base URL:', RETELL_API_URL);
+  console.log('Base URL:', 'https://api.retellai.com');
 
   const endpoints = [
-    { name: 'List Agents', url: `${RETELL_API_URL}/list-agents`, method: 'GET' },
-    { name: 'List LLMs', url: `${RETELL_API_URL}/list-retell-llms`, method: 'GET' },
-    { name: 'Get Agent (test)', url: `${RETELL_API_URL}/get-agent/test123`, method: 'GET' },
+    { name: 'List Agents', url: 'https://api.retellai.com/list-agents', method: 'GET' },
+    { name: 'List LLMs', url: 'https://api.retellai.com/list-retell-llms', method: 'GET' },
+    { name: 'Get Agent (test)', url: 'https://api.retellai.com/get-agent/test123', method: 'GET' },
   ];
 
   for (const endpoint of endpoints) {
@@ -50,7 +49,7 @@ export async function testRetellConnection(): Promise<void> {
   console.log('Payload:', JSON.stringify(testLLMPayload, null, 2));
 
   try {
-    const response = await fetch(`${RETELL_API_URL}/create-retell-llm`, {
+    const response = await fetch('https://api.retellai.com/create-retell-llm', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -117,7 +116,7 @@ export async function createRetellLLM(
 ): Promise<string> {
   console.log('=== STEP 1: Creating Retell LLM ===');
   console.log('API Key being used:', RETELL_API_KEY?.substring(0, 20) + '...');
-  console.log('API URL:', `${RETELL_API_URL}/create-retell-llm`);
+  console.log('API URL:', 'https://api.retellai.com/create-retell-llm');
 
   const payload: CreateLLMPayload = {
     general_prompt: prompt,
@@ -131,7 +130,7 @@ export async function createRetellLLM(
 
   console.log('LLM Payload:', JSON.stringify(payload, null, 2));
 
-  const response = await fetch(`${RETELL_API_URL}/create-retell-llm`, {
+  const response = await fetch('https://api.retellai.com/create-retell-llm', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -181,11 +180,11 @@ export async function createRetellAgent(
   };
 
   console.log('Trying MINIMAL payload first:');
-  console.log('API URL:', `${RETELL_API_URL}/create-agent`);
+  console.log('API URL:', 'https://api.retellai.com/create-agent');
   console.log('API Key:', RETELL_API_KEY?.substring(0, 20) + '...');
   console.log('Payload:', JSON.stringify(minimalPayload, null, 2));
 
-  let response = await fetch(`${RETELL_API_URL}/create-agent`, {
+  let response = await fetch('https://api.retellai.com/create-agent', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -224,9 +223,9 @@ export async function createRetellAgent(
     };
 
     console.log('Trying full payload:', JSON.stringify(payload, null, 2));
-    console.log('API URL:', `${RETELL_API_URL}/create-agent`);
+    console.log('API URL:', 'https://api.retellai.com/create-agent');
 
-    response = await fetch(`${RETELL_API_URL}/create-agent`, {
+    response = await fetch('https://api.retellai.com/create-agent', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -295,7 +294,7 @@ export async function updateRetellAgent(
     };
   }
 
-  const response = await fetch(`${RETELL_API_URL}/update-agent/${agentId}`, {
+  const response = await fetch(`https://api.retellai.com/update-agent/${agentId}`, {
     method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -312,7 +311,7 @@ export async function updateRetellAgent(
 }
 
 export async function deleteRetellAgent(agentId: string): Promise<void> {
-  const response = await fetch(`${RETELL_API_URL}/delete-agent/${agentId}`, {
+  const response = await fetch(`https://api.retellai.com/delete-agent/${agentId}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -327,7 +326,7 @@ export async function deleteRetellAgent(agentId: string): Promise<void> {
 }
 
 export async function getRetellAgent(agentId: string): Promise<any> {
-  const response = await fetch(`${RETELL_API_URL}/get-agent/${agentId}`, {
+  const response = await fetch(`https://api.retellai.com/get-agent/${agentId}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
