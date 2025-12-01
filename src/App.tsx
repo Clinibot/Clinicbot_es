@@ -9,6 +9,8 @@ import ClinicDetail from './pages/ClinicDetail';
 import ManageCalendars from './pages/ManageCalendars';
 import CreateAgent from './pages/CreateAgent';
 import AgentDetail from './pages/AgentDetail';
+import Analytics from './pages/Analytics';
+import ManageCalcom from './pages/ManageCalcom';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -116,6 +118,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <AgentDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clinic/:clinicId/analytics"
+            element={
+              <ProtectedRoute>
+                <Analytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clinic/:clinicId/calcom"
+            element={
+              <ProtectedRoute>
+                <ManageCalcom />
               </ProtectedRoute>
             }
           />

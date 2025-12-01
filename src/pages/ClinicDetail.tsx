@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Phone, Edit, Trash2, Calendar } from 'lucide-react';
+import { ArrowLeft, Plus, Phone, Edit, Trash2, Calendar, BarChart3 } from 'lucide-react';
 import { getClinic, deleteClinic } from '../services/clinicService';
 import { getClinicAgents } from '../services/agentService';
 import { Clinic, Agent } from '../types';
@@ -106,6 +106,20 @@ export default function ClinicDetail() {
               >
                 <Calendar className="w-5 h-5" />
                 Gestionar Calendarios
+              </button>
+              <button
+                onClick={() => navigate(`/clinic/${clinicId}/analytics`)}
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+              >
+                <BarChart3 className="w-5 h-5" />
+                Ver Analíticas
+              </button>
+              <button
+                onClick={() => navigate(`/clinic/${clinicId}/calcom`)}
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
+              >
+                <Calendar className="w-5 h-5" />
+                Configurar Cal.com
               </button>
             </div>
           </div>

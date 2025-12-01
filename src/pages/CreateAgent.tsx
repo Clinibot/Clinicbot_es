@@ -4,6 +4,7 @@ import { ArrowLeft, Phone, Volume2, Loader } from 'lucide-react';
 import { createAgent, VOICES, LANGUAGES } from '../services/agentService';
 import { createRetellAgent, testRetellConnection } from '../services/retellService';
 import { getClinic } from '../services/clinicService';
+import { buildAgentTools } from '../services/agentToolsService';
 
 export default function CreateAgent() {
   const { clinicId } = useParams();
@@ -197,7 +198,8 @@ Si dice que no responde: "Perfecto, gracias por tu tiempo. ¡Cuídate!"
     setSubmitting(true);
     setError('');
     try {
-      const retellAgentId = await createRetellAgent(agentName, prompt, voiceId, language);
+      const tools = await buildAgentTools(clinicId);
+      const retellAgentId = await createRetellAgent(agentName, prompt, voiceId, language, tools);
       const newAgent = await createAgent({
         clinic_id: clinicId,
         retell_agent_id: retellAgentId,

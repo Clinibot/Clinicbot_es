@@ -220,16 +220,9 @@ export async function createRetellAgent(
   prompt: string,
   voiceId: string,
   language: string,
-  transfers?: Array<{ name: string; phone: string; description: string }>
+  tools?: Array<any>
 ): Promise<string> {
   console.log('\n🚀 Starting Agent Creation Process...\n');
-
-  const tools = transfers?.map(t => ({
-    type: 'transfer_call' as const,
-    name: t.name,
-    description: t.description,
-    number: t.phone,
-  }));
 
   const llmId = await createRetellLLM(prompt, undefined, tools);
 
@@ -348,24 +341,17 @@ export async function updateRetellAgent(
     prompt?: string;
     voiceId?: string;
     language?: string;
-    transfers?: Array<{ name: string; phone: string; description: string }>;
+    tools?: Array<any>;
   }
 ): Promise<void> {
-  if (updates.prompt || updates.transfers) {
+  if (updates.prompt || updates.tools) {
     const agent = await getRetellAgent(agentId);
 
     if (!agent.response_engine?.llm_id) {
       throw new Error('No se pudo obtener el llm_id del agente');
     }
 
-    const tools = updates.transfers?.map(t => ({
-      type: 'transfer_call' as const,
-      name: t.name,
-      description: t.description,
-      number: t.phone,
-    }));
-
-    await updateRetellLLM(agent.response_engine.llm_id, updates.prompt || agent.response_engine.general_prompt, tools);
+    await updateRetellLLM(agent.response_engine.llm_id, updates.prompt || agent.response_engine.general_prompt, updates.tools);
   }
 
   const payload: UpdateAgentPayload = {};

@@ -5,6 +5,7 @@ import { getAgent, updateAgent, deleteAgent, VOICES, LANGUAGES } from '../servic
 import { updateRetellAgent, deleteRetellAgent } from '../services/retellService';
 import { Agent } from '../types';
 import WebPlayground from '../components/WebPlayground';
+import { buildAgentTools } from '../services/agentToolsService';
 
 interface Transfer {
   name: string;
@@ -52,12 +53,13 @@ export default function AgentDetail() {
     if (!agent || !agentId) return;
     setSaving(true);
     try {
+      const tools = await buildAgentTools(agent.clinic_id, agentId, transfers);
       await updateRetellAgent(agent.retell_agent_id, {
         name,
         prompt,
         voiceId,
         language,
-        transfers: transfers.length > 0 ? transfers : undefined
+        tools
       });
       await updateAgent(agentId, { name, prompt, voice_id: voiceId, language, transfers });
       await loadAgent();
