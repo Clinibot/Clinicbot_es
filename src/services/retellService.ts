@@ -245,11 +245,11 @@ export async function createRetellAgent(
   };
 
   console.log('Trying MINIMAL payload first:');
-  console.log('API URL:', 'https://api.retellai.com/v2/agent');
+  console.log('API URL:', 'https://api.retellai.com/create-agent');
   console.log('API Key:', RETELL_API_KEY?.substring(0, 20) + '...');
   console.log('Payload:', JSON.stringify(minimalPayload, null, 2));
 
-  let response = await fetch('https://api.retellai.com/v2/agent', {
+  let response = await fetch('https://api.retellai.com/create-agent', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -289,9 +289,9 @@ export async function createRetellAgent(
     };
 
     console.log('Trying full payload:', JSON.stringify(payload, null, 2));
-    console.log('API URL:', 'https://api.retellai.com/v2/agent');
+    console.log('API URL:', 'https://api.retellai.com/create-agent');
 
-    response = await fetch('https://api.retellai.com/v2/agent', {
+    response = await fetch('https://api.retellai.com/create-agent', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -315,7 +315,7 @@ export async function createRetellAgent(
 
     if (response.status === 404) {
       throw new Error(
-        'Error 404: El endpoint /v2/agent no está disponible. ' +
+        'Error 404: El endpoint /create-agent no está disponible. ' +
         'Posibles causas:\n' +
         '1. Tu cuenta de Retell AI podría necesitar verificación o activación\n' +
         '2. La API key podría no tener los permisos necesarios\n' +
@@ -376,7 +376,7 @@ export async function updateRetellAgent(
   console.log('Agent ID:', agentId);
   console.log('Update payload:', JSON.stringify(payload, null, 2));
 
-  const response = await fetch(`https://api.retellai.com/v2/agent/${agentId}`, {
+  const response = await fetch(`https://api.retellai.com/update-agent/${agentId}`, {
     method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -395,7 +395,7 @@ export async function updateRetellAgent(
 }
 
 export async function deleteRetellAgent(agentId: string): Promise<void> {
-  const response = await fetch(`https://api.retellai.com/v2/agent/${agentId}`, {
+  const response = await fetch(`https://api.retellai.com/delete-agent/${agentId}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -410,7 +410,7 @@ export async function deleteRetellAgent(agentId: string): Promise<void> {
 }
 
 export async function updateAgentWebhook(agentId: string): Promise<void> {
-  const response = await fetch(`https://api.retellai.com/v2/agent/${agentId}`, {
+  const response = await fetch(`https://api.retellai.com/update-agent/${agentId}`, {
     method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -431,7 +431,7 @@ export async function updateAgentWebhook(agentId: string): Promise<void> {
 }
 
 export async function getRetellAgent(agentId: string): Promise<any> {
-  const response = await fetch(`https://api.retellai.com/v2/agent/${agentId}`, {
+  const response = await fetch(`https://api.retellai.com/get-agent/${agentId}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
