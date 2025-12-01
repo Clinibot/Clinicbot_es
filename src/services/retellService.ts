@@ -115,6 +115,10 @@ export async function createRetellLLM(
   prompt: string,
   beginMessage?: string
 ): Promise<string> {
+  console.log('=== STEP 1: Creating Retell LLM ===');
+  console.log('API Key being used:', RETELL_API_KEY?.substring(0, 20) + '...');
+  console.log('API URL:', `${RETELL_API_URL}/create-retell-llm`);
+
   const payload: CreateLLMPayload = {
     general_prompt: prompt,
     model: 'gpt-4o-mini',
@@ -125,6 +129,8 @@ export async function createRetellLLM(
     payload.begin_message = beginMessage;
   }
 
+  console.log('LLM Payload:', JSON.stringify(payload, null, 2));
+
   const response = await fetch(`${RETELL_API_URL}/create-retell-llm`, {
     method: 'POST',
     headers: {
@@ -134,14 +140,18 @@ export async function createRetellLLM(
     body: JSON.stringify(payload),
   });
 
+  console.log('LLM Response Status:', response.status, response.statusText);
+
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Retell LLM API error:', errorText);
+    console.error('❌ Retell LLM API error:', errorText);
     console.error('Request payload:', JSON.stringify(payload, null, 2));
     throw new Error(`Failed to create Retell LLM: ${response.status} ${errorText}`);
   }
 
   const data = await response.json();
+  console.log('✅ LLM created successfully:', data);
+  console.log('LLM ID:', data.llm_id);
   return data.llm_id;
 }
 
@@ -151,9 +161,15 @@ export async function createRetellAgent(
   voiceId: string,
   language: string
 ): Promise<string> {
-  console.log('Creating Retell LLM...');
+  console.log('\n🚀 Starting Agent Creation Process...\n');
+
   const llmId = await createRetellLLM(prompt);
-  console.log('LLM created with ID:', llmId);
+
+  console.log('\n=== STEP 2: Creating Retell Agent ===');
+  console.log('LLM ID from step 1:', llmId);
+  console.log('Agent Name:', name);
+  console.log('Voice ID:', voiceId);
+  console.log('Language:', language);
 
   const minimalPayload = {
     response_engine: {
@@ -164,7 +180,10 @@ export async function createRetellAgent(
     voice_id: voiceId,
   };
 
-  console.log('Trying MINIMAL payload first:', JSON.stringify(minimalPayload, null, 2));
+  console.log('Trying MINIMAL payload first:');
+  console.log('API URL:', `${RETELL_API_URL}/create-agent`);
+  console.log('API Key:', RETELL_API_KEY?.substring(0, 20) + '...');
+  console.log('Payload:', JSON.stringify(minimalPayload, null, 2));
 
   let response = await fetch(`${RETELL_API_URL}/create-agent`, {
     method: 'POST',
@@ -175,7 +194,7 @@ export async function createRetellAgent(
     body: JSON.stringify(minimalPayload),
   });
 
-  console.log('Minimal payload response:', response.status);
+  console.log('Minimal payload response status:', response.status, response.statusText);
 
   if (!response.ok) {
     console.log('Minimal payload failed, trying FULL payload...');
@@ -221,7 +240,13 @@ export async function createRetellAgent(
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Retell Agent API error:', errorText);
+    console.error('❌ Agent creation failed!');
+    console.error('Status:', response.status, response.statusText);
+    console.error('Response:', errorText);
+    console.error('Headers sent:', {
+      'Authorization': 'Bearer ' + RETELL_API_KEY?.substring(0, 20) + '...',
+      'Content-Type': 'application/json'
+    });
 
     if (response.status === 404) {
       throw new Error(
@@ -241,7 +266,9 @@ export async function createRetellAgent(
   }
 
   const data = await response.json();
-  console.log('Agent created:', data);
+  console.log('✅ Agent created successfully!');
+  console.log('Agent data:', data);
+  console.log('Agent ID:', data.agent_id);
   return data.agent_id;
 }
 
