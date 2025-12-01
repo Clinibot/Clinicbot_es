@@ -101,11 +101,11 @@ export default function ClinicDetail() {
                 </div>
               )}
               <button
-                onClick={() => navigate(`/clinic/${clinicId}/calendars`)}
-                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                onClick={() => navigate(`/clinic/${clinicId}/calcom`)}
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors"
               >
                 <Calendar className="w-4 h-4" />
-                Gestionar Calendarios
+                Configurar Cal.com
               </button>
               <button
                 onClick={() => navigate(`/clinic/${clinicId}/analytics`)}
@@ -113,13 +113,6 @@ export default function ClinicDetail() {
               >
                 <BarChart3 className="w-4 h-4" />
                 Ver Analíticas
-              </button>
-              <button
-                onClick={() => navigate(`/clinic/${clinicId}/calcom`)}
-                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors"
-              >
-                <Calendar className="w-4 h-4" />
-                Configurar Cal.com
               </button>
             </div>
           </div>

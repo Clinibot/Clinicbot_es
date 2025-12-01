@@ -344,21 +344,25 @@ export async function updateRetellAgent(
     tools?: Array<any>;
   }
 ): Promise<void> {
-  if (updates.prompt || updates.tools) {
-    const agent = await getRetellAgent(agentId);
+  const agent = await getRetellAgent(agentId);
 
-    if (!agent.response_engine?.llm_id) {
-      throw new Error('No se pudo obtener el llm_id del agente');
-    }
+  if (!agent.response_engine?.llm_id) {
+    throw new Error('No se pudo obtener el llm_id del agente');
+  }
 
-    await updateRetellLLM(agent.response_engine.llm_id, updates.prompt || agent.response_engine.general_prompt, updates.tools);
+  if (updates.prompt !== undefined || updates.tools !== undefined) {
+    await updateRetellLLM(
+      agent.response_engine.llm_id,
+      updates.prompt !== undefined ? updates.prompt : agent.response_engine.general_prompt,
+      updates.tools
+    );
   }
 
   const payload: UpdateAgentPayload = {};
 
-  if (updates.name) payload.agent_name = updates.name;
-  if (updates.voiceId) payload.voice_id = updates.voiceId;
-  if (updates.language) payload.language = updates.language;
+  if (updates.name !== undefined) payload.agent_name = updates.name;
+  if (updates.voiceId !== undefined) payload.voice_id = updates.voiceId;
+  if (updates.language !== undefined) payload.language = updates.language;
 
   if (Object.keys(payload).length === 0) {
     console.log('No agent fields to update (only LLM was updated)');
@@ -383,6 +387,8 @@ export async function updateRetellAgent(
     console.error('Retell API error:', errorText);
     throw new Error(`Failed to update Retell agent: ${response.status} ${errorText}`);
   }
+
+  console.log('✅ Agent updated successfully');
 }
 
 export async function deleteRetellAgent(agentId: string): Promise<void> {

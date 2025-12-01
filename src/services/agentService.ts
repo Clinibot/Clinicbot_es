@@ -66,6 +66,7 @@ export const VOICES = [
 ];
 
 export const LANGUAGES = [
+  { id: 'multi', name: 'Multi-idioma (Recomendado)' },
   { id: 'es-ES', name: 'Español (España)' },
   { id: 'es-419', name: 'Español (Latinoamérica)' },
   { id: 'en-US', name: 'English (US)' },

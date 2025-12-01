@@ -98,14 +98,6 @@ function App() {
             }
           />
           <Route
-            path="/clinic/:clinicId/calendars"
-            element={
-              <ProtectedRoute>
-                <ManageCalendars />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/clinic/:clinicId/create-agent"
             element={
               <ProtectedRoute>
