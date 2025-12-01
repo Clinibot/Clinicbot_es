@@ -1,6 +1,38 @@
 const RETELL_API_KEY = import.meta.env.VITE_RETELL_API_KEY;
 const RETELL_API_URL = 'https://api.retellai.com';
 
+export async function testRetellConnection(): Promise<void> {
+  console.log('Testing Retell API connection...');
+  console.log('API Key:', RETELL_API_KEY?.substring(0, 10) + '...');
+
+  const endpoints = [
+    { name: 'List Agents', url: `${RETELL_API_URL}/list-agents`, method: 'GET' },
+    { name: 'List LLMs', url: `${RETELL_API_URL}/list-retell-llms`, method: 'GET' },
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint.url, {
+        method: endpoint.method,
+        headers: {
+          'Authorization': `Bearer ${RETELL_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log(`${endpoint.name}: ${response.status} ${response.ok ? '✓' : '✗'}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`${endpoint.name} response:`, data);
+      } else {
+        const error = await response.text();
+        console.log(`${endpoint.name} error:`, error);
+      }
+    } catch (error) {
+      console.error(`${endpoint.name} failed:`, error);
+    }
+  }
+}
+
 interface CreateLLMPayload {
   general_prompt: string;
   model?: string;
