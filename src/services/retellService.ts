@@ -16,6 +16,17 @@ interface CreateAgentPayload {
     type: string;
     llm_id: string;
   };
+  voice_model?: string;
+  voice_temperature?: number;
+  voice_speed?: number;
+  responsiveness?: number;
+  interruption_sensitivity?: number;
+  enable_backchannel?: boolean;
+  backchannel_frequency?: number;
+  backchannel_words?: string[];
+  max_call_duration_ms?: number;
+  end_call_after_silence_ms?: number;
+  fallback_voice_ids?: string[];
 }
 
 interface UpdateAgentPayload {
@@ -82,12 +93,23 @@ export async function createRetellAgent(
       type: 'retell-llm',
       llm_id: llmId,
     },
+    voice_model: 'eleven_turbo_v2',
+    voice_temperature: 1.0,
+    voice_speed: 1.0,
+    responsiveness: 1.0,
+    interruption_sensitivity: 1.0,
+    enable_backchannel: true,
+    backchannel_frequency: 0.8,
+    backchannel_words: ['ajá', 'sí', 'entiendo', 'claro'],
+    max_call_duration_ms: 600000,
+    end_call_after_silence_ms: 20000,
+    fallback_voice_ids: ['openai-Alloy'],
   };
 
   console.log('Creating agent with payload:', JSON.stringify(payload, null, 2));
-  console.log('API URL:', `${RETELL_API_URL}/agent`);
+  console.log('API URL:', `${RETELL_API_URL}/create-agent`);
 
-  const response = await fetch(`${RETELL_API_URL}/agent`, {
+  const response = await fetch(`${RETELL_API_URL}/create-agent`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -133,7 +155,7 @@ export async function updateRetellAgent(
     };
   }
 
-  const response = await fetch(`${RETELL_API_URL}/agent/${agentId}`, {
+  const response = await fetch(`${RETELL_API_URL}/update-agent/${agentId}`, {
     method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -150,7 +172,7 @@ export async function updateRetellAgent(
 }
 
 export async function deleteRetellAgent(agentId: string): Promise<void> {
-  const response = await fetch(`${RETELL_API_URL}/agent/${agentId}`, {
+  const response = await fetch(`${RETELL_API_URL}/delete-agent/${agentId}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
@@ -165,7 +187,7 @@ export async function deleteRetellAgent(agentId: string): Promise<void> {
 }
 
 export async function getRetellAgent(agentId: string): Promise<any> {
-  const response = await fetch(`${RETELL_API_URL}/agent/${agentId}`, {
+  const response = await fetch(`${RETELL_API_URL}/get-agent/${agentId}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
