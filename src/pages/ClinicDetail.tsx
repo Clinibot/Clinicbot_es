@@ -102,23 +102,23 @@ export default function ClinicDetail() {
               )}
               <button
                 onClick={() => navigate(`/clinic/${clinicId}/calendars`)}
-                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors"
               >
-                <Calendar className="w-5 h-5" />
+                <Calendar className="w-4 h-4" />
                 Gestionar Calendarios
               </button>
               <button
                 onClick={() => navigate(`/clinic/${clinicId}/analytics`)}
-                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                <BarChart3 className="w-5 h-5" />
+                <BarChart3 className="w-4 h-4" />
                 Ver Analíticas
               </button>
               <button
                 onClick={() => navigate(`/clinic/${clinicId}/calcom`)}
-                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors"
               >
-                <Calendar className="w-5 h-5" />
+                <Calendar className="w-4 h-4" />
                 Configurar Cal.com
               </button>
             </div>
@@ -157,7 +157,7 @@ export default function ClinicDetail() {
                     className="bg-white rounded-2xl shadow-lg border border-blue-100 hover:shadow-xl cursor-pointer p-6"
                   >
                     <h3 className="text-lg font-bold text-gray-900 mb-2">{agent.name}</h3>
-                    <span className={`px-3 py-1 rounded-full text-xs ${agent.agent_type === 'inbound' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs ${agent.agent_type === 'inbound' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>
                       {agent.agent_type === 'inbound' ? 'Entrantes' : 'Salientes'}
                     </span>
                   </div>

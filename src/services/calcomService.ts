@@ -80,15 +80,20 @@ export async function deleteCalcomEventType(id: string): Promise<void> {
 }
 
 export async function fetchCalcomEventTypes(apiKey: string): Promise<any[]> {
-  const response = await fetch('https://api.cal.com/v1/event-types', {
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calcom-fetch-event-types`;
+
+  const response = await fetch(url, {
+    method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
       'Content-Type': 'application/json',
     },
+    body: JSON.stringify({ apiKey }),
   });
 
   if (!response.ok) {
-    throw new Error('Error al conectar con Cal.com. Verifica tu API key.');
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Error al conectar con Cal.com. Verifica tu API key.');
   }
 
   const data = await response.json();

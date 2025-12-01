@@ -236,7 +236,7 @@ export default function ManageCalcom() {
                 <button
                   onClick={handleFetchEvents}
                   disabled={fetching}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors disabled:opacity-50"
                 >
                   <RefreshCw className={`w-4 h-4 ${fetching ? 'animate-spin' : ''}`} />
                   {fetching ? 'Cargando...' : 'Obtener Eventos'}
