@@ -20,9 +20,10 @@ export default function WebPlayground({ agentId }: WebPlaygroundProps) {
     retellClient.current = new RetellWebClient();
 
     retellClient.current.on('conversationStarted', () => {
-      console.log('Conversation started');
+      console.log('✅ Conversation started');
       setIsConnected(true);
       setIsConnecting(false);
+      setError('');
     });
 
     retellClient.current.on('audio', (audio) => {
@@ -30,16 +31,20 @@ export default function WebPlayground({ agentId }: WebPlaygroundProps) {
     });
 
     retellClient.current.on('conversationEnded', ({ code, reason }) => {
-      console.log('Conversation ended:', code, reason);
+      console.log('❌ Conversation ended:', code, reason);
       setIsConnected(false);
       setIsConnecting(false);
+      setIsMuted(false);
+      setIsSpeakerMuted(false);
     });
 
     retellClient.current.on('error', (error) => {
-      console.error('Error:', error);
+      console.error('❌ Error:', error);
       setError(error.message || 'Ha ocurrido un error');
       setIsConnected(false);
       setIsConnecting(false);
+      setIsMuted(false);
+      setIsSpeakerMuted(false);
     });
 
     retellClient.current.on('update', (update) => {
@@ -98,9 +103,11 @@ export default function WebPlayground({ agentId }: WebPlaygroundProps) {
         throw new Error('No se recibió token de acceso');
       }
 
+      console.log('🚀 Starting call with access token...');
       await retellClient.current.startCall({
         accessToken: data.access_token,
       });
+      console.log('✅ Call started successfully');
     } catch (err) {
       console.error('Error starting call:', err);
       setError(err instanceof Error ? err.message : 'Error al iniciar llamada');
@@ -109,10 +116,14 @@ export default function WebPlayground({ agentId }: WebPlaygroundProps) {
   }
 
   function stopCall() {
+    console.log('📞 Stopping call...');
     if (retellClient.current) {
       retellClient.current.stopCall();
     }
     setIsConnected(false);
+    setIsConnecting(false);
+    setIsMuted(false);
+    setIsSpeakerMuted(false);
   }
 
   function toggleMute() {
@@ -130,10 +141,25 @@ export default function WebPlayground({ agentId }: WebPlaygroundProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 mb-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-2">Chat de Voz con el Agente</h3>
+      <div className={`rounded-xl p-6 mb-6 transition-all ${
+        isConnected
+          ? 'bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-400'
+          : 'bg-gradient-to-br from-blue-50 to-blue-100'
+      }`}>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xl font-bold text-gray-900">Chat de Voz con el Agente</h3>
+          {isConnected && (
+            <div className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
+              <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+              En llamada
+            </div>
+          )}
+        </div>
         <p className="text-gray-700 mb-4">
-          Haz clic en el botón para iniciar una conversación de voz en tiempo real con tu agente
+          {isConnected
+            ? 'Conversación activa. Habla con tu agente en tiempo real'
+            : 'Haz clic en el botón para iniciar una conversación de voz en tiempo real con tu agente'
+          }
         </p>
 
         <div className="flex items-center justify-center gap-4">
@@ -148,10 +174,19 @@ export default function WebPlayground({ agentId }: WebPlaygroundProps) {
           )}
 
           {isConnecting && (
-            <div className="flex items-center gap-3 bg-yellow-600 text-white px-8 py-4 rounded-xl font-semibold">
-              <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-              Conectando...
-            </div>
+            <>
+              <div className="flex items-center gap-3 bg-yellow-600 text-white px-8 py-4 rounded-xl font-semibold">
+                <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                Conectando...
+              </div>
+              <button
+                onClick={stopCall}
+                className="flex items-center gap-3 bg-red-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-red-700 transition-all transform hover:scale-105 shadow-lg"
+              >
+                <PhoneOff className="w-6 h-6" />
+                Cancelar
+              </button>
+            </>
           )}
 
           {isConnected && (

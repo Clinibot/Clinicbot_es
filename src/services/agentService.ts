@@ -56,13 +56,15 @@ export async function deleteAgent(agentId: string) {
 }
 
 export const VOICES = [
-  { id: '11labs-Rachel', name: 'Rachel - Cálida y Natural (Femenino)' },
-  { id: '11labs-Matilda', name: 'Matilda - Profesional y Clara (Femenino)' },
-  { id: '11labs-Bella', name: 'Bella - Amigable y Cercana (Femenino)' },
-  { id: '11labs-Charlotte', name: 'Charlotte - Dulce y Empática (Femenino)' },
+  { id: '11labs-Domi', name: 'Domi - Voz Española Natural (Femenino)' },
+  { id: '11labs-Matilda', name: 'Matilda - Profesional Multilingüe (Femenino)' },
+  { id: '11labs-Nicole', name: 'Nicole - Cálida y Empática (Femenino)' },
+  { id: '11labs-Valentina', name: 'Valentina - Dulce y Natural (Femenino)' },
+  { id: '11labs-Alonso', name: 'Alonso - Voz Española (Masculino)' },
   { id: '11labs-Daniel', name: 'Daniel - Seguro y Confiable (Masculino)' },
-  { id: '11labs-Josh', name: 'Josh - Joven y Dinámico (Masculino)' },
-  { id: '11labs-Antoni', name: 'Antoni - Versátil y Natural (Masculino)' },
+  { id: 'openai-alloy', name: 'Alloy - OpenAI (Neutral)' },
+  { id: 'openai-echo', name: 'Echo - OpenAI (Masculino)' },
+  { id: 'openai-nova', name: 'Nova - OpenAI (Femenino)' },
 ];
 
 export const LANGUAGES = [
