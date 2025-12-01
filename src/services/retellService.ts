@@ -70,7 +70,9 @@ export async function createRetellAgent(
   voiceId: string,
   language: string
 ): Promise<string> {
+  console.log('Creating Retell LLM...');
   const llmId = await createRetellLLM(prompt);
+  console.log('LLM created with ID:', llmId);
 
   const payload: CreateAgentPayload = {
     agent_name: name,
@@ -82,6 +84,9 @@ export async function createRetellAgent(
     },
   };
 
+  console.log('Creating agent with payload:', JSON.stringify(payload, null, 2));
+  console.log('API URL:', `${RETELL_API_URL}/create-agent`);
+
   const response = await fetch(`${RETELL_API_URL}/create-agent`, {
     method: 'POST',
     headers: {
@@ -91,6 +96,8 @@ export async function createRetellAgent(
     body: JSON.stringify(payload),
   });
 
+  console.log('Response status:', response.status);
+
   if (!response.ok) {
     const errorText = await response.text();
     console.error('Retell Agent API error:', errorText);
@@ -99,6 +106,7 @@ export async function createRetellAgent(
   }
 
   const data = await response.json();
+  console.log('Agent created:', data);
   return data.agent_id;
 }
 
