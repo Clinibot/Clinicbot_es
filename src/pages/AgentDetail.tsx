@@ -4,6 +4,7 @@ import { ArrowLeft, Save, Trash2, Phone, Plus, X, Settings, MessageSquare, Edit,
 import { getAgent, updateAgent, deleteAgent, VOICES, LANGUAGES } from '../services/agentService';
 import { updateRetellAgent, deleteRetellAgent } from '../services/retellService';
 import { Agent } from '../types';
+import WebPlayground from '../components/WebPlayground';
 
 interface Transfer {
   name: string;
@@ -320,37 +321,8 @@ Cuando un paciente necesite hablar con una de estas personas o departamentos, ex
         )}
 
         {activeTab === 'playground' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <h2 className="text-2xl font-bold mb-2">Chat de Prueba con el Agente</h2>
-            <p className="text-gray-600 mb-6">
-              Conversa con tu agente en tiempo real para probar sus respuestas
-            </p>
-
-            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-8 text-center">
-              <MessageSquare className="w-16 h-16 mx-auto mb-4 text-yellow-600" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Funcionalidad en Desarrollo</h3>
-              <p className="text-gray-700 mb-4">
-                El playground de chat web estará disponible próximamente. Por ahora, puedes probar tu agente realizando llamadas reales desde el dashboard de Retell AI.
-              </p>
-              <div className="bg-white rounded-lg p-4 text-left max-w-2xl mx-auto">
-                <p className="text-sm font-medium text-gray-900 mb-2">Mientras tanto, puedes:</p>
-                <ul className="list-disc list-inside space-y-2 text-sm text-gray-700">
-                  <li>Editar la configuración del agente en la pestaña "Configuración"</li>
-                  <li>Agregar transferencias telefónicas en la pestaña "Transferencias"</li>
-                  <li>Visitar el dashboard de Retell AI para hacer pruebas de llamadas reales</li>
-                  <li>Revisar el prompt del agente para ajustar su comportamiento</li>
-                </ul>
-              </div>
-              <a
-                href="https://beta.retellai.com/dashboard"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-              >
-                Ir al Dashboard de Retell AI
-                <ArrowLeft className="w-4 h-4 rotate-180" />
-              </a>
-            </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8" style={{ minHeight: '600px' }}>
+            <WebPlayground agentId={agent.retell_agent_id} />
           </div>
         )}
 
