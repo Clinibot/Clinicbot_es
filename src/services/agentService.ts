@@ -56,15 +56,13 @@ export async function deleteAgent(agentId: string) {
 }
 
 export const VOICES = [
-  { id: '11labs-Domi', name: 'Domi - Voz Española Natural (Femenino)' },
-  { id: '11labs-Matilda', name: 'Matilda - Profesional Multilingüe (Femenino)' },
-  { id: '11labs-Nicole', name: 'Nicole - Cálida y Empática (Femenino)' },
-  { id: '11labs-Valentina', name: 'Valentina - Dulce y Natural (Femenino)' },
-  { id: '11labs-Alonso', name: 'Alonso - Voz Española (Masculino)' },
-  { id: '11labs-Daniel', name: 'Daniel - Seguro y Confiable (Masculino)' },
-  { id: 'openai-alloy', name: 'Alloy - OpenAI (Neutral)' },
-  { id: 'openai-echo', name: 'Echo - OpenAI (Masculino)' },
-  { id: 'openai-nova', name: 'Nova - OpenAI (Femenino)' },
+  { id: '11labs-UOIqAnmS11Reiei1Ytkc', name: 'Carolina - Voz Española (Femenino)' },
+  { id: '11labs-kwNLkNjbQHMw9YUFZsHI', name: 'Alejandra - Voz Española (Femenino)' },
+  { id: '11labs-gD1IexrzCvsXPHUuT0s3', name: 'Sara - Voz Española (Femenino)' },
+  { id: '11labs-v3V1d2rk6528UrLKRuy8', name: 'Susi - Voz Española (Femenino)' },
+  { id: '11labs-7QQzpAyzlKTVrRzQJmTE', name: 'Dani - Voz Española (Masculino)' },
+  { id: '11labs-HIYif4jehvc9P9A8DYbX', name: 'Pablo - Voz Española (Masculino)' },
+  { id: '11labs-851ejYcv2BoNPjrkw93G', name: 'Toni - Voz Española (Masculino)' },
 ];
 
 export const LANGUAGES = [

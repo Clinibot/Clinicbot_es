@@ -72,6 +72,12 @@ interface CreateLLMPayload {
   model?: string;
   begin_message?: string;
   start_speaker?: 'agent' | 'user';
+  tools?: Array<{
+    type: 'transfer_call';
+    name: string;
+    description: string;
+    number: string;
+  }>;
 }
 
 interface CreateAgentPayload {
@@ -112,7 +118,13 @@ interface UpdateAgentPayload {
 
 export async function createRetellLLM(
   prompt: string,
-  beginMessage?: string
+  beginMessage?: string,
+  tools?: Array<{
+    type: 'transfer_call';
+    name: string;
+    description: string;
+    number: string;
+  }>
 ): Promise<string> {
   console.log('=== STEP 1: Creating Retell LLM ===');
   console.log('API Key being used:', RETELL_API_KEY?.substring(0, 20) + '...');
@@ -126,6 +138,10 @@ export async function createRetellLLM(
 
   if (beginMessage) {
     payload.begin_message = beginMessage;
+  }
+
+  if (tools && tools.length > 0) {
+    payload.tools = tools;
   }
 
   console.log('LLM Payload:', JSON.stringify(payload, null, 2));
@@ -156,15 +172,28 @@ export async function createRetellLLM(
 
 export async function updateRetellLLM(
   llmId: string,
-  prompt: string
+  prompt: string,
+  tools?: Array<{
+    type: 'transfer_call';
+    name: string;
+    description: string;
+    number: string;
+  }>
 ): Promise<void> {
   console.log('=== Updating Retell LLM ===');
   console.log('LLM ID:', llmId);
   console.log('New prompt length:', prompt.length);
+  console.log('Tools count:', tools?.length || 0);
 
-  const payload = {
+  const payload: any = {
     general_prompt: prompt,
   };
+
+  if (tools && tools.length > 0) {
+    payload.tools = tools;
+  }
+
+  console.log('Update payload:', JSON.stringify(payload, null, 2));
 
   const response = await fetch(`https://api.retellai.com/update-retell-llm/${llmId}`, {
     method: 'PATCH',
@@ -190,11 +219,19 @@ export async function createRetellAgent(
   name: string,
   prompt: string,
   voiceId: string,
-  language: string
+  language: string,
+  transfers?: Array<{ name: string; phone: string; description: string }>
 ): Promise<string> {
   console.log('\n🚀 Starting Agent Creation Process...\n');
 
-  const llmId = await createRetellLLM(prompt);
+  const tools = transfers?.map(t => ({
+    type: 'transfer_call' as const,
+    name: t.name,
+    description: t.description,
+    number: t.phone,
+  }));
+
+  const llmId = await createRetellLLM(prompt, undefined, tools);
 
   console.log('\n=== STEP 2: Creating Retell Agent ===');
   console.log('LLM ID from step 1:', llmId);
@@ -311,16 +348,24 @@ export async function updateRetellAgent(
     prompt?: string;
     voiceId?: string;
     language?: string;
+    transfers?: Array<{ name: string; phone: string; description: string }>;
   }
 ): Promise<void> {
-  if (updates.prompt) {
+  if (updates.prompt || updates.transfers) {
     const agent = await getRetellAgent(agentId);
 
     if (!agent.response_engine?.llm_id) {
       throw new Error('No se pudo obtener el llm_id del agente');
     }
 
-    await updateRetellLLM(agent.response_engine.llm_id, updates.prompt);
+    const tools = updates.transfers?.map(t => ({
+      type: 'transfer_call' as const,
+      name: t.name,
+      description: t.description,
+      number: t.phone,
+    }));
+
+    await updateRetellLLM(agent.response_engine.llm_id, updates.prompt || agent.response_engine.general_prompt, tools);
   }
 
   const payload: UpdateAgentPayload = {};

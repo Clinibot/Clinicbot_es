@@ -52,9 +52,14 @@ export default function AgentDetail() {
     if (!agent || !agentId) return;
     setSaving(true);
     try {
-      const updatedPrompt = buildPromptWithTransfers();
-      await updateRetellAgent(agent.retell_agent_id, { name, prompt: updatedPrompt, voiceId, language });
-      await updateAgent(agentId, { name, prompt: updatedPrompt, voice_id: voiceId, language, transfers });
+      await updateRetellAgent(agent.retell_agent_id, {
+        name,
+        prompt,
+        voiceId,
+        language,
+        transfers: transfers.length > 0 ? transfers : undefined
+      });
+      await updateAgent(agentId, { name, prompt, voice_id: voiceId, language, transfers });
       await loadAgent();
       setShowPromptEditor(false);
       alert('Agente actualizado correctamente');
@@ -63,20 +68,6 @@ export default function AgentDetail() {
     } finally {
       setSaving(false);
     }
-  }
-
-  function buildPromptWithTransfers() {
-    if (transfers.length === 0) return prompt;
-
-    const transferSection = `
-
-## Transferencias Disponibles
-
-${transfers.map((t) => `- **${t.name}** (${t.phone}): ${t.description}`).join('\n')}
-
-Cuando un paciente necesite hablar con una de estas personas o departamentos, explica que puedes transferir la llamada y pregunta si desea que lo hagas ahora.`;
-
-    return prompt + transferSection;
   }
 
   async function handleDelete() {
@@ -407,12 +398,14 @@ Cuando un paciente necesite hablar con una de estas personas o departamentos, ex
             )}
 
             <div className="mt-6 bg-purple-50 border border-purple-200 rounded-lg p-4 text-sm text-purple-900">
-              <p className="font-medium mb-2">ℹ️ Información sobre Transferencias</p>
+              <p className="font-medium mb-2">💡 Cómo funcionan las transferencias:</p>
               <ul className="list-disc list-inside space-y-1 text-purple-800">
-                <li>Las transferencias se agregarán automáticamente al prompt del agente al guardar</li>
-                <li>El agente preguntará al paciente antes de realizar una transferencia</li>
-                <li>Asegúrate de que los números incluyan el código de país completo (ej: +34)</li>
-                <li>Escribe los números con espacios para mejor legibilidad</li>
+                <li><strong>Sistema automático de tools:</strong> Cuando guardas, las transferencias se configuran como herramientas (tools) en Retell AI</li>
+                <li><strong>La descripción es clave:</strong> El agente usa la descripción para detectar cuándo debe transferir</li>
+                <li><strong>Ejemplo:</strong> Si pones "Para emergencias médicas urgentes", el agente transferirá automáticamente cuando detecte una emergencia</li>
+                <li><strong>Nombre claro:</strong> El agente usará el nombre que pongas para ejecutar la transferencia (ej: "Dr. García", "Urgencias")</li>
+                <li><strong>Formato del número:</strong> Incluye siempre el código de país completo (ej: +34 600 123 456)</li>
+                <li>No necesitas modificar el prompt manualmente - todo se configura automáticamente</li>
               </ul>
             </div>
           </div>
