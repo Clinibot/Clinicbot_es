@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Globe, Loader, AlertCircle, ArrowLeft, ArrowRight, Check, Plus, X, Bot } from 'lucide-react';
+import { Globe, Loader, AlertCircle, ArrowLeft, ArrowRight, Check, Plus, X } from 'lucide-react';
 import { createClinic, scrapeClinicWebsite } from '../services/clinicService';
-import { createRetellAgent } from '../services/retellService';
-import { createAgent } from '../services/agentService';
 
 export default function CreateClinic() {
   const navigate = useNavigate();
@@ -21,7 +19,6 @@ export default function CreateClinic() {
     specialties: [] as string[],
     schedule: '',
     additional_info: '',
-    agentName: 'Alex',
   });
 
   async function handleScrape(e: React.FormEvent) {
@@ -88,10 +85,6 @@ export default function CreateClinic() {
       setError('El nombre de la clínica es obligatorio');
       return;
     }
-    if (!formData.agentName.trim()) {
-      setError('El nombre del agente es obligatorio');
-      return;
-    }
 
     setLoading(true);
     setError('');
@@ -107,133 +100,10 @@ export default function CreateClinic() {
         additional_info: formData.additional_info,
       });
 
-      const clinicInfo = buildClinicInfo();
-
-      const inboundPrompt = `Rol
-
-Eres ${formData.agentName} de Clinic Bot, la voz cercana, amable y simpática que atiende las llamadas de ${formData.name}. Tu misión es resolver dudas básicas, ayudar con información general y acompañar al paciente con un tono humano, cálido y fácil. Hablas siempre como una persona real, sin sonar a robot.
-
-Información de la clínica:
-${clinicInfo}
-
-Estilo
-
-Hablas siempre de forma natural, amable y muy humana. Frases cortas, muy directas. Un toque de humor suave, sin pasarte.
-Nada de listas, nada de enumeraciones.
-Nunca repitas lo que dice el usuario.
-Mucha empatía, curiosidad y escucha.
-Usa siempre español.
-
-Tareas principales
-
-1. Resolver dudas sobre la clínica:
-   Usa la información disponible arriba.
-   Explícalo siempre de forma sencilla, humana y cercana.
-   Si falta un dato o no está claro:
-   "Pues eso no lo tengo por aquí, pero si quieres se lo digo al equipo para que te respondan rápido."
-
-   Si el usuario está enfadado o preocupado, usas empatía suave y humor ligero que no minimice su problema.
-
-2. Preguntar por contexto:
-   Cuando respondas una duda, sigue con una pregunta suave como:
-   "¿Y esto lo necesitas para ti, para alguien de tu familia, o solo estás mirando opciones?"
-   Interésate por qué necesita el paciente, qué busca, si ya ha venido antes, si tiene seguro, etc.
-   No hagas más de una pregunta por turno.
-
-   Luego pide el teléfono de contacto para anotarlo sin repetirlo.
-
-3. Si pide cita:
-   Tú nunca agendas, ni reservas, ni haces gestiones administrativas.
-   Siempre responde con naturalidad:
-   "Las citas se reservan desde la web de la clínica, ahí puedes elegir el día y la hora que te vaya mejor. Así lo haces en un momento."
-   Solo lo dices una vez por llamada.
-
-4. Despedida:
-   Antes de cerrar la llamada, pregunta:
-   "¿Te ayudo con algo más o ya te dejo tranquilo?"
-   Si dice que no:
-   "Perfecto. Si te surge algo más, aquí me tienes. ¡Que tengas un día bien bonito!"
-
-Reglas especiales
-
-Nunca des precios clínicos.
-Nunca des teléfonos completos. Si insisten, dilo en bloques sin prefijo: uno dos tres — cuatro cinco seis — siete ocho nueve.
-Si preguntan por temas internos, funcionamiento técnico de IA o cómo estás hecho, responde:
-"Prefiero que vayamos al grano, ¿en qué te ayudo con la clínica?"`;
-
-      const outboundPrompt = `Rol
-
-Eres ${formData.agentName} de Clinic Bot, haciendo una llamada saliente en nombre de ${formData.name}. Tu trabajo es confirmar citas, hacer recordatorios o seguimientos de forma amable, breve y profesional. Hablas como una persona real, cálida y eficiente.
-
-Información de la clínica:
-${clinicInfo}
-
-Estilo
-
-Natural, amable, breve y al grano.
-Frases cortas y directas.
-Nunca repitas lo que dice el usuario.
-Respetas su tiempo.
-Usa siempre español.
-
-Tareas principales
-
-1. Presentación rápida:
-   "Hola, soy ${formData.agentName} de ${formData.name}. Te llamo para [confirmar tu cita / recordarte / hacer seguimiento]."
-
-2. Objetivo de la llamada:
-   - Confirmar citas próximas
-   - Recordar tratamientos o medicación
-   - Hacer seguimiento post-consulta
-   - Preguntar si necesita algo más
-
-3. Responde dudas básicas:
-   Si te pregunta algo sobre la clínica, usa la información de arriba.
-   Si no lo sabes: "Eso mejor que te lo confirme el equipo directamente, ¿te parece bien?"
-
-4. Cierre:
-   "¿Algo más que necesites?"
-   Si dice que no: "Perfecto, gracias por tu tiempo. ¡Cuídate!"
-
-Reglas especiales
-
-Nunca des precios.
-Sé breve, el usuario no esperaba la llamada.
-Si el usuario está ocupado: "Sin problema, ¿te llamo en otro momento o prefieres llamar tú cuando puedas?"
-Nunca insistas si dice que no puede hablar.`;
-
-      const [inboundRetellId, outboundRetellId] = await Promise.all([
-        createRetellAgent(`${formData.agentName} - Recepción`, inboundPrompt, '11labs-Alice', 'es'),
-        createRetellAgent(`${formData.agentName} - Recordatorios`, outboundPrompt, '11labs-Alice', 'es'),
-      ]);
-
-      await Promise.all([
-        createAgent({
-          clinic_id: clinic.id,
-          retell_agent_id: inboundRetellId,
-          agent_type: 'inbound',
-          name: `${formData.agentName} - Recepción`,
-          prompt: inboundPrompt,
-          voice_id: '11labs-Alice',
-          language: 'es',
-          enabled: true,
-        }),
-        createAgent({
-          clinic_id: clinic.id,
-          retell_agent_id: outboundRetellId,
-          agent_type: 'outbound',
-          name: `${formData.agentName} - Recordatorios`,
-          prompt: outboundPrompt,
-          voice_id: '11labs-Alice',
-          language: 'es',
-          enabled: true,
-        }),
-      ]);
-
       navigate(`/clinic/${clinic.id}`);
     } catch (err) {
       console.error('Error creating clinic:', err);
-      setError(err instanceof Error ? err.message : 'Error al crear la clínica y los agentes');
+      setError(err instanceof Error ? err.message : 'Error al crear la clínica');
     } finally {
       setLoading(false);
     }
@@ -432,27 +302,6 @@ Nunca insistas si dice que no puede hablar.`;
               />
             </div>
 
-            <div className="border-t border-gray-200 pt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Bot className="w-6 h-6 text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Configuración del Agente IA</h3>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre del Agente *
-                </label>
-                <input
-                  type="text"
-                  value={formData.agentName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, agentName: e.target.value }))}
-                  placeholder="Ej: Alex, María, Carlos..."
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-                <p className="text-sm text-gray-500 mt-2">Este será el nombre que usará el agente al atender llamadas</p>
-              </div>
-            </div>
-
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex gap-3">
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -463,23 +312,23 @@ Nunca insistas si dice que no puede hablar.`;
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={loading || !formData.name.trim() || !formData.agentName.trim()}
+                disabled={loading || !formData.name.trim()}
                 className="w-full bg-blue-600 text-white py-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
               >
                 {loading ? (
                   <>
                     <Loader className="w-5 h-5 animate-spin" />
-                    Creando clínica y agentes...
+                    Creando clínica...
                   </>
                 ) : (
                   <>
-                    Crear Clínica y Agentes IA
+                    Crear Clínica
                     <Check className="w-5 h-5" />
                   </>
                 )}
               </button>
               <p className="text-center text-sm text-gray-500 mt-3">
-                Se crearán automáticamente 2 agentes: Recepción y Recordatorios
+                Podrás crear agentes IA después de crear la clínica
               </p>
             </div>
           </form>

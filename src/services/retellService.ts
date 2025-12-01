@@ -1,15 +1,20 @@
 const RETELL_API_KEY = import.meta.env.VITE_RETELL_API_KEY;
 const RETELL_API_URL = 'https://api.retellai.com';
 
+interface CreateLLMPayload {
+  general_prompt: string;
+  model?: string;
+  begin_message?: string;
+  start_speaker?: 'agent' | 'user';
+}
+
 interface CreateAgentPayload {
   agent_name: string;
   voice_id: string;
   language: string;
   response_engine: {
     type: string;
-    llm_id?: string;
-    openai_model_name?: string;
-    general_prompt?: string;
+    llm_id: string;
   };
 }
 
@@ -25,20 +30,54 @@ interface UpdateAgentPayload {
   };
 }
 
+export async function createRetellLLM(
+  prompt: string,
+  beginMessage?: string
+): Promise<string> {
+  const payload: CreateLLMPayload = {
+    general_prompt: prompt,
+    model: 'gpt-4o-mini',
+    start_speaker: 'agent',
+  };
+
+  if (beginMessage) {
+    payload.begin_message = beginMessage;
+  }
+
+  const response = await fetch(`${RETELL_API_URL}/create-retell-llm`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${RETELL_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Retell LLM API error:', errorText);
+    throw new Error(`Failed to create Retell LLM: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.llm_id;
+}
+
 export async function createRetellAgent(
   name: string,
   prompt: string,
   voiceId: string,
   language: string
 ): Promise<string> {
+  const llmId = await createRetellLLM(prompt);
+
   const payload: CreateAgentPayload = {
     agent_name: name,
     voice_id: voiceId,
     language: language,
     response_engine: {
       type: 'retell-llm',
-      openai_model_name: 'gpt-4o-mini',
-      general_prompt: prompt,
+      llm_id: llmId,
     },
   };
 
@@ -53,7 +92,7 @@ export async function createRetellAgent(
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Retell API error:', errorText);
+    console.error('Retell Agent API error:', errorText);
     throw new Error(`Failed to create Retell agent: ${response.status} ${errorText}`);
   }
 
