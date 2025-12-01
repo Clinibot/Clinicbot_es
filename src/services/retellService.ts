@@ -85,9 +85,9 @@ export async function createRetellAgent(
   };
 
   console.log('Creating agent with payload:', JSON.stringify(payload, null, 2));
-  console.log('API URL:', `${RETELL_API_URL}/create-agent`);
+  console.log('API URL:', `${RETELL_API_URL}/v2/create-agent`);
 
-  const response = await fetch(`${RETELL_API_URL}/create-agent`, {
+  const response = await fetch(`${RETELL_API_URL}/v2/create-agent`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${RETELL_API_KEY}`,
