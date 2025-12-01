@@ -177,6 +177,7 @@ export async function createRetellAgent(
     },
     agent_name: name,
     voice_id: voiceId,
+    language: language,
   };
 
   console.log('Trying MINIMAL payload first:');
