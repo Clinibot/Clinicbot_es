@@ -33,6 +33,11 @@ export interface Agent {
   voice_id: string;
   language: string;
   enabled: boolean;
+  transfers?: Array<{
+    name: string;
+    phone: string;
+    description: string;
+  }>;
   created_at: string;
   updated_at: string;
 }

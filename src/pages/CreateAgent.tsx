@@ -18,7 +18,7 @@ export default function CreateAgent() {
   const [agentPersonName, setAgentPersonName] = useState('Alex');
   const [prompt, setPrompt] = useState('');
   const [voiceId, setVoiceId] = useState('11labs-Alice');
-  const [language, setLanguage] = useState('es-ES');
+  const [language, setLanguage] = useState('multi');
 
   useEffect(() => {
     loadClinic();
