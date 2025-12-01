@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Trash2, Phone, Plus, X, Settings, MessageSquare, Edit, ChevronDown, ChevronUp } from 'lucide-react';
 import { getAgent, updateAgent, deleteAgent, VOICES, LANGUAGES } from '../services/agentService';
-import { updateRetellAgent, deleteRetellAgent } from '../services/retellService';
+import { updateRetellAgent, deleteRetellAgent, updateAgentWebhook } from '../services/retellService';
 import { Agent } from '../types';
 import WebPlayground from '../components/WebPlayground';
 import { buildAgentTools } from '../services/agentToolsService';
@@ -43,6 +43,12 @@ export default function AgentDetail() {
         setVoiceId(data.voice_id || VOICES[0].id);
         setLanguage(data.language || LANGUAGES[0].id);
         setTransfers(data.transfers || []);
+
+        try {
+          await updateAgentWebhook(data.retell_agent_id);
+        } catch (err) {
+          console.error('Error updating webhook:', err);
+        }
       }
     } finally {
       setLoading(false);

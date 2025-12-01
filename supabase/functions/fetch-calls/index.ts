@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
   try {
     const url = new URL(req.url);
     const agentId = url.searchParams.get('agent_id');
-    const limit = parseInt(url.searchParams.get('limit') || '100');
+    const limit = parseInt(url.searchParams.get('limit') || '1000');
 
     if (!agentId) {
       return new Response(
@@ -51,8 +51,10 @@ Deno.serve(async (req: Request) => {
       throw new Error('RETELL_API_KEY not configured');
     }
 
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
     const response = await fetch(
-      `https://api.retellai.com/v2/list-calls?agent_id=${agentId}&limit=${limit}&sort_order=descending`,
+      `https://api.retellai.com/v2/list-calls?agent_id=${agentId}&limit=${limit}&sort_order=descending&start_timestamp_min=${sevenDaysAgo}`,
       {
         headers: {
           'Authorization': `Bearer ${retellApiKey}`,

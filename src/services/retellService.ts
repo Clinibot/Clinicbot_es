@@ -1,4 +1,5 @@
 const RETELL_API_KEY = import.meta.env.VITE_RETELL_API_KEY;
+const WEBHOOK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/retell-webhook`;
 
 export async function testRetellConnection(): Promise<void> {
   console.log('=== Testing Retell API connection ===');
@@ -240,6 +241,7 @@ export async function createRetellAgent(
     agent_name: name,
     voice_id: voiceId,
     language: language,
+    webhook_url: WEBHOOK_URL,
   };
 
   console.log('Trying MINIMAL payload first:');
@@ -280,6 +282,7 @@ export async function createRetellAgent(
       backchannel_frequency: 0.8,
       backchannel_words: ['ajá', 'sí', 'entiendo', 'claro'],
       language: language,
+      webhook_url: WEBHOOK_URL,
       end_call_after_silence_ms: 20000,
       max_call_duration_ms: 600000,
       begin_message_delay_ms: 1000,
@@ -404,6 +407,27 @@ export async function deleteRetellAgent(agentId: string): Promise<void> {
     console.error('Retell API error:', errorText);
     throw new Error(`Failed to delete Retell agent: ${response.status} ${errorText}`);
   }
+}
+
+export async function updateAgentWebhook(agentId: string): Promise<void> {
+  const response = await fetch(`https://api.retellai.com/update-agent/${agentId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${RETELL_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      webhook_url: WEBHOOK_URL,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Failed to update webhook:', errorText);
+    throw new Error(`Failed to update webhook: ${response.status} ${errorText}`);
+  }
+
+  console.log('✅ Webhook updated for agent:', agentId);
 }
 
 export async function getRetellAgent(agentId: string): Promise<any> {
