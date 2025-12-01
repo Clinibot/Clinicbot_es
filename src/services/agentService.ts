@@ -62,9 +62,17 @@ export const VOICES = [
 ];
 
 export const LANGUAGES = [
-  { id: 'es', name: 'Español' },
-  { id: 'en', name: 'English' },
-  { id: 'ca', name: 'Català' },
+  { id: 'es-ES', name: 'Español (España)' },
+  { id: 'es-419', name: 'Español (Latinoamérica)' },
+  { id: 'ca-ES', name: 'Català' },
+  { id: 'en-US', name: 'English (US)' },
+  { id: 'en-GB', name: 'English (UK)' },
+  { id: 'fr-FR', name: 'Français' },
+  { id: 'de-DE', name: 'Deutsch' },
+  { id: 'it-IT', name: 'Italiano' },
+  { id: 'pt-PT', name: 'Português' },
+  { id: 'ru-RU', name: 'Русский' },
+  { id: 'multi', name: 'Multi-idioma' },
 ];
 
 export const DEFAULT_PROMPT = `Eres Sofía, una recepcionista IA profesional y amable para una clínica médica. Tu objetivo es proporcionar un servicio de calidad al contestar llamadas, agendar citas, proporcionar información sobre servicios y transferir llamadas cuando sea necesario.

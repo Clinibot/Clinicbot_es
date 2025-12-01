@@ -15,9 +15,10 @@ export default function CreateAgent() {
 
   const [agentType, setAgentType] = useState<'inbound' | 'outbound'>('inbound');
   const [agentName, setAgentName] = useState('');
+  const [agentPersonName, setAgentPersonName] = useState('Alex');
   const [prompt, setPrompt] = useState('');
   const [voiceId, setVoiceId] = useState('11labs-Alice');
-  const [language, setLanguage] = useState('es');
+  const [language, setLanguage] = useState('es-ES');
 
   useEffect(() => {
     loadClinic();
@@ -27,7 +28,7 @@ export default function CreateAgent() {
     if (clinic) {
       updatePromptForType(agentType);
     }
-  }, [agentType, clinic]);
+  }, [agentType, clinic, agentPersonName]);
 
   async function loadClinic() {
     if (!clinicId) return;
@@ -46,10 +47,14 @@ export default function CreateAgent() {
     if (!clinic) return '';
     const parts = [];
     if (clinic.name) parts.push(`Nombre: ${clinic.name}`);
+    if (clinic.website) parts.push(`Web: ${clinic.website}`);
     if (clinic.phone) parts.push(`Teléfono: ${clinic.phone}`);
     if (clinic.address) parts.push(`Dirección: ${clinic.address}`);
     if (clinic.city) parts.push(`Ciudad: ${clinic.city}`);
     if (clinic.specialties?.length > 0) parts.push(`Especialidades: ${clinic.specialties.join(', ')}`);
+    if (clinic.opening_hours && Object.keys(clinic.opening_hours).length > 0) {
+      parts.push(`Horarios: ${JSON.stringify(clinic.opening_hours)}`);
+    }
     if (clinic.additional_info) parts.push(`Información adicional: ${clinic.additional_info}`);
     return parts.join('\n');
   }
@@ -64,7 +69,7 @@ export default function CreateAgent() {
       setAgentName(`${agentNameBase} - Recepción`);
       setPrompt(`Rol
 
-Eres Alex de Clinic Bot, la voz cercana, amable y simpática que atiende las llamadas de ${clinic.name}. Tu misión es resolver dudas básicas, ayudar con información general y acompañar al paciente con un tono humano, cálido y fácil. Hablas siempre como una persona real, sin sonar a robot.
+Eres ${agentPersonName} de ${clinic.name}, la voz cercana, amable y simpática que atiende las llamadas. Tu misión es resolver dudas básicas, ayudar con información general y acompañar al paciente con un tono humano, cálido y fácil. Hablas siempre como una persona real, sin sonar a robot.
 
 Información de la clínica:
 ${clinicInfo}
@@ -75,12 +80,12 @@ Hablas siempre de forma natural, amable y muy humana. Frases cortas, muy directa
 Nada de listas, nada de enumeraciones.
 Nunca repitas lo que dice el usuario.
 Mucha empatía, curiosidad y escucha.
-Usa siempre español.
+Adapta el idioma al paciente según sea necesario.
 
 Tareas principales
 
 1. Resolver dudas sobre la clínica:
-   Usa la información disponible arriba.
+   Usa TODA la información disponible arriba (nombre, dirección, teléfono, especialidades, horarios, web, información adicional).
    Explícalo siempre de forma sencilla, humana y cercana.
    Si falta un dato o no está claro:
    "Pues eso no lo tengo por aquí, pero si quieres se lo digo al equipo para que te respondan rápido."
@@ -117,7 +122,7 @@ Si preguntan por temas internos, funcionamiento técnico de IA o cómo estás he
       setAgentName(`${agentNameBase} - Recordatorios`);
       setPrompt(`Rol
 
-Eres Alex de Clinic Bot, haciendo una llamada saliente en nombre de ${clinic.name}. Tu trabajo es confirmar citas, hacer recordatorios o seguimientos de forma amable, breve y profesional. Hablas como una persona real, cálida y eficiente.
+Eres ${agentPersonName} de ${clinic.name}, haciendo una llamada saliente. Tu trabajo es confirmar citas, hacer recordatorios o seguimientos de forma amable, breve y profesional. Hablas como una persona real, cálida y eficiente.
 
 Información de la clínica:
 ${clinicInfo}
@@ -128,12 +133,12 @@ Natural, amable, breve y al grano.
 Frases cortas y directas.
 Nunca repitas lo que dice el usuario.
 Respetas su tiempo.
-Usa siempre español.
+Adapta el idioma al paciente según sea necesario.
 
 Tareas principales
 
 1. Presentación rápida:
-   "Hola, soy Alex de ${clinic.name}. Te llamo para [confirmar tu cita / recordarte / hacer seguimiento]."
+   "Hola, soy ${agentPersonName} de ${clinic.name}. Te llamo para [confirmar tu cita / recordarte / hacer seguimiento]."
 
 2. Objetivo de la llamada:
    - Confirmar citas próximas
@@ -142,7 +147,7 @@ Tareas principales
    - Preguntar si necesita algo más
 
 3. Responde dudas básicas:
-   Si te pregunta algo sobre la clínica, usa la información de arriba.
+   Si te pregunta algo sobre la clínica, usa TODA la información de arriba (nombre, dirección, teléfono, especialidades, horarios, web, información adicional).
    Si no lo sabes: "Eso mejor que te lo confirme el equipo directamente, ¿te parece bien?"
 
 4. Cierre:
@@ -251,6 +256,19 @@ Nunca insistas si dice que no puede hablar.`);
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                   placeholder="Ej: Clínica Demo - Recepción"
                 />
+                <p className="text-xs text-gray-500 mt-1">Nombre interno para identificar el agente</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nombre de la Persona</label>
+                <input
+                  type="text"
+                  value={agentPersonName}
+                  onChange={(e) => setAgentPersonName(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="Ej: Alex, María, Carlos..."
+                />
+                <p className="text-xs text-gray-500 mt-1">El nombre con el que se presentará al atender llamadas</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
