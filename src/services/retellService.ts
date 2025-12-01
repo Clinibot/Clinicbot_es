@@ -15,10 +15,12 @@ interface CreateAgentPayload {
   response_engine: {
     type: string;
     llm_id: string;
+    version?: number;
   };
   voice_model?: string;
   voice_temperature?: number;
   voice_speed?: number;
+  volume?: number;
   responsiveness?: number;
   interruption_sensitivity?: number;
   enable_backchannel?: boolean;
@@ -27,6 +29,7 @@ interface CreateAgentPayload {
   max_call_duration_ms?: number;
   end_call_after_silence_ms?: number;
   fallback_voice_ids?: string[];
+  begin_message_delay_ms?: number;
 }
 
 interface UpdateAgentPayload {
@@ -86,24 +89,27 @@ export async function createRetellAgent(
   console.log('LLM created with ID:', llmId);
 
   const payload: CreateAgentPayload = {
-    agent_name: name,
-    voice_id: voiceId,
-    language: language,
     response_engine: {
       type: 'retell-llm',
       llm_id: llmId,
+      version: 0,
     },
+    agent_name: name,
+    voice_id: voiceId,
     voice_model: 'eleven_turbo_v2',
+    fallback_voice_ids: ['openai-Alloy'],
     voice_temperature: 1.0,
     voice_speed: 1.0,
+    volume: 1.0,
     responsiveness: 1.0,
     interruption_sensitivity: 1.0,
     enable_backchannel: true,
     backchannel_frequency: 0.8,
     backchannel_words: ['ajá', 'sí', 'entiendo', 'claro'],
-    max_call_duration_ms: 600000,
+    language: language,
     end_call_after_silence_ms: 20000,
-    fallback_voice_ids: ['openai-Alloy'],
+    max_call_duration_ms: 600000,
+    begin_message_delay_ms: 1000,
   };
 
   console.log('Creating agent with payload:', JSON.stringify(payload, null, 2));
