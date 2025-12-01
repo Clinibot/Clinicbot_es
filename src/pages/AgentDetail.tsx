@@ -1,16 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Trash2, Phone, Plus, X, Settings, MessageSquare, Edit, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Phone, Plus, X, Settings, MessageSquare, Edit, ChevronDown, ChevronUp, Calendar, CheckCircle } from 'lucide-react';
 import { getAgent, updateAgent, deleteAgent, VOICES, LANGUAGES } from '../services/agentService';
 import { updateRetellAgent, deleteRetellAgent, updateAgentWebhook } from '../services/retellService';
 import { Agent } from '../types';
 import WebPlayground from '../components/WebPlayground';
 import { buildAgentTools } from '../services/agentToolsService';
+import { supabase } from '../lib/supabase';
 
 interface Transfer {
   name: string;
   phone: string;
   description: string;
+}
+
+interface CalcomEventType {
+  id: string;
+  event_name: string;
+  duration_minutes: number;
+  description: string | null;
+  enabled: boolean;
 }
 
 export default function AgentDetail() {
@@ -27,6 +36,7 @@ export default function AgentDetail() {
   const [voiceId, setVoiceId] = useState('');
   const [language, setLanguage] = useState('');
   const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [calcomEvents, setCalcomEvents] = useState<CalcomEventType[]>([]);
 
   useEffect(() => {
     loadAgent();
@@ -43,6 +53,20 @@ export default function AgentDetail() {
         setVoiceId(data.voice_id || VOICES[0].id);
         setLanguage(data.language || LANGUAGES[0].id);
         setTransfers(data.transfers || []);
+
+        // Cargar eventos de Cal.com asignados a este agente
+        try {
+          const { data: events } = await supabase
+            .from('calcom_event_types')
+            .select('id, event_name, duration_minutes, description, enabled')
+            .eq('clinic_id', data.clinic_id)
+            .eq('enabled', true)
+            .or(`agent_id.is.null,agent_id.eq.${agentId}`);
+
+          setCalcomEvents(events || []);
+        } catch (err) {
+          console.error('Error loading Cal.com events:', err);
+        }
 
         try {
           await updateAgentWebhook(data.retell_agent_id);
@@ -298,6 +322,46 @@ export default function AgentDetail() {
                 </div>
               )}
 
+              {calcomEvents.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Calendar className="w-5 h-5 text-green-600" />
+                    <h3 className="font-semibold text-gray-900">Cal.com Tools Activas</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {calcomEvents.map((event) => (
+                      <div key={event.id} className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <p className="font-medium text-gray-900 text-sm">{event.event_name}</p>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-1 ml-6">{event.duration_minutes} minutos</p>
+                            {event.description && (
+                              <p className="text-xs text-gray-500 mt-1 ml-6">{event.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-xs text-blue-900 font-medium mb-1">✓ Tools disponibles:</p>
+                      <ul className="text-xs text-blue-800 space-y-1 ml-3">
+                        <li>• check_availability (consultar disponibilidad)</li>
+                        <li>• book_appointment (reservar cita)</li>
+                      </ul>
+                    </div>
+                    <button
+                      onClick={() => navigate(`/clinic/${clinicId}/calcom`)}
+                      className="w-full px-3 py-2 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Gestionar Cal.com
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Información del Agente</h3>
                 <div className="space-y-2 text-sm">
@@ -309,9 +373,13 @@ export default function AgentDetail() {
                     <span className="text-gray-600">Actualizado:</span>
                     <span className="text-gray-900 font-medium">{new Date(agent.updated_at).toLocaleDateString('es-ES')}</span>
                   </div>
-                  <div className="flex justify-between py-2">
+                  <div className="flex justify-between py-2 border-b border-gray-200">
                     <span className="text-gray-600">Transferencias:</span>
                     <span className="text-gray-900 font-medium">{transfers.length}</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-gray-600">Cal.com Tools:</span>
+                    <span className="text-gray-900 font-medium">{calcomEvents.length > 0 ? 'Activas' : 'No configuradas'}</span>
                   </div>
                 </div>
               </div>

@@ -8,6 +8,8 @@ import {
   saveCalcomEventType,
   deleteCalcomEventType,
   fetchCalcomEventTypes,
+  updateAgentPromptWithCalcom,
+  updateAllAgentsPromptsForClinic,
   CalcomEventType,
 } from '../services/calcomService';
 import { getClinic } from '../services/clinicService';
@@ -63,6 +65,7 @@ export default function ManageCalcom() {
     setSaving(true);
     try {
       await saveCalcomConfig(clinicId, apiKey, enabled);
+      await loadData(); // Recargar datos después de guardar
       alert('Configuración guardada correctamente');
     } catch (error) {
       alert('Error al guardar: ' + (error instanceof Error ? error.message : 'Error desconocido'));
@@ -72,15 +75,25 @@ export default function ManageCalcom() {
   }
 
   async function handleFetchEvents() {
-    if (!apiKey.trim()) {
-      alert('Primero guarda tu API Key');
+    if (!clinicId) {
+      alert('No se pudo identificar la clínica');
+      return;
+    }
+
+    // Recargar la configuración para asegurar que tenemos la API key más reciente
+    const config = await getCalcomConfig(clinicId);
+    if (!config || !config.api_key || !config.api_key.trim()) {
+      alert('Primero guarda tu API Key de Cal.com');
       return;
     }
 
     setFetching(true);
     try {
-      const events = await fetchCalcomEventTypes(apiKey);
+      const events = await fetchCalcomEventTypes(config.api_key);
       setAvailableEvents(events);
+      if (events.length === 0) {
+        alert('No se encontraron eventos en tu cuenta de Cal.com. Crea eventos primero en Cal.com y luego vuelve a intentar.');
+      }
     } catch (error) {
       alert('Error al obtener eventos: ' + (error instanceof Error ? error.message : 'Error desconocido'));
     } finally {
@@ -102,7 +115,16 @@ export default function ManageCalcom() {
       });
 
       await loadData();
-      alert('Evento importado correctamente');
+
+      // Actualizar los prompts de todos los agentes de la clínica
+      try {
+        await updateAllAgentsPromptsForClinic(clinicId);
+      } catch (promptError) {
+        console.error('Error al actualizar prompts:', promptError);
+        // No bloqueamos el flujo si falla la actualización del prompt
+      }
+
+      alert('Evento importado correctamente. Los agentes han sido actualizados con las nuevas instrucciones.');
     } catch (error) {
       alert('Error al importar: ' + (error instanceof Error ? error.message : 'Error desconocido'));
     }
@@ -115,6 +137,15 @@ export default function ManageCalcom() {
         enabled: !eventType.enabled,
       });
       await loadData();
+
+      // Actualizar los prompts de todos los agentes de la clínica
+      if (clinicId) {
+        try {
+          await updateAllAgentsPromptsForClinic(clinicId);
+        } catch (promptError) {
+          console.error('Error al actualizar prompts:', promptError);
+        }
+      }
     } catch (error) {
       alert('Error al actualizar: ' + (error instanceof Error ? error.message : 'Error desconocido'));
     }
@@ -126,6 +157,15 @@ export default function ManageCalcom() {
     try {
       await deleteCalcomEventType(id);
       await loadData();
+
+      // Actualizar los prompts de todos los agentes de la clínica
+      if (clinicId) {
+        try {
+          await updateAllAgentsPromptsForClinic(clinicId);
+        } catch (promptError) {
+          console.error('Error al actualizar prompts:', promptError);
+        }
+      }
     } catch (error) {
       alert('Error al eliminar: ' + (error instanceof Error ? error.message : 'Error desconocido'));
     }
@@ -141,6 +181,24 @@ export default function ManageCalcom() {
         agent_id: agentId || null,
       });
       await loadData();
+
+      // Actualizar el prompt del agente asignado (o de todos si se desasigna)
+      if (agentId) {
+        try {
+          await updateAgentPromptWithCalcom(agentId);
+          alert('Agente asignado correctamente. El prompt ha sido actualizado con las instrucciones de Cal.com.');
+        } catch (promptError) {
+          console.error('Error al actualizar prompt del agente:', promptError);
+          alert('Agente asignado, pero hubo un problema al actualizar el prompt. Por favor, verifica la configuración.');
+        }
+      } else if (clinicId) {
+        // Si se desasigna, actualizar todos los agentes
+        try {
+          await updateAllAgentsPromptsForClinic(clinicId);
+        } catch (promptError) {
+          console.error('Error al actualizar prompts:', promptError);
+        }
+      }
     } catch (error) {
       alert('Error al asignar agente: ' + (error instanceof Error ? error.message : 'Error desconocido'));
     }

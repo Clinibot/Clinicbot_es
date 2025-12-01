@@ -31,10 +31,12 @@ Deno.serve(async (req: Request) => {
       timeZone: 'Europe/Madrid',
     };
 
-    const response = await fetch('https://api.cal.com/v1/bookings', {
+    // Cal.com API usa el parámetro apiKey en la URL
+    const url = `https://api.cal.com/v1/bookings?apiKey=${encodeURIComponent(apiKey)}`;
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(bookingData),
