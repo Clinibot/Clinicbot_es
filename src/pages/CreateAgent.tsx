@@ -301,8 +301,7 @@ Si dice que no responde: "Perfecto, gracias por tu tiempo. ¡Cuídate!"
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Voz
-                    <span className="text-xs text-gray-500 ml-2">(Escucha previews en el Dashboard de Retell)</span>
+                    Voz del Agente
                   </label>
                   <select
                     value={voiceId}

@@ -116,7 +116,7 @@ export default function AgentDetail() {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{agent.name}</h1>
-              <p className="text-sm text-gray-500">ID: {agent.retell_agent_id}</p>
+              <p className="text-sm text-gray-500">ID del Agente</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -397,11 +397,11 @@ export default function AgentDetail() {
               </div>
             )}
 
-            <div className="mt-6 bg-purple-50 border border-purple-200 rounded-lg p-4 text-sm text-purple-900">
+            <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900">
               <p className="font-medium mb-2">💡 Cómo funcionan las transferencias:</p>
-              <ul className="list-disc list-inside space-y-1 text-purple-800">
-                <li><strong>Sistema automático de tools:</strong> Cuando guardas, las transferencias se configuran como herramientas (tools) en Retell AI</li>
-                <li><strong>La descripción es clave:</strong> El agente usa la descripción para detectar cuándo debe transferir</li>
+              <ul className="list-disc list-inside space-y-1 text-blue-800">
+                <li><strong>Sistema automático:</strong> Cuando guardas, las transferencias se configuran automáticamente como herramientas del agente</li>
+                <li><strong>La descripción es clave:</strong> El agente usa la descripción para detectar cuándo debe transferir la llamada</li>
                 <li><strong>Ejemplo:</strong> Si pones "Para emergencias médicas urgentes", el agente transferirá automáticamente cuando detecte una emergencia</li>
                 <li><strong>Nombre claro:</strong> El agente usará el nombre que pongas para ejecutar la transferencia (ej: "Dr. García", "Urgencias")</li>
                 <li><strong>Formato del número:</strong> Incluye siempre el código de país completo (ej: +34 600 123 456)</li>
