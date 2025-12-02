@@ -83,7 +83,15 @@ export default function AgentDetail() {
     if (!agent || !agentId) return;
     setSaving(true);
     try {
+      console.log('=== GUARDANDO AGENTE ===');
+      console.log('Agent ID (Supabase):', agentId);
+      console.log('Retell Agent ID:', agent.retell_agent_id);
+      console.log('Voice ID seleccionado:', voiceId);
+      console.log('Nombre de voz:', VOICES.find(v => v.id === voiceId)?.name);
+
       const tools = await buildAgentTools(agent.clinic_id, agentId, transfers);
+
+      console.log('Actualizando en Retell AI...');
       await updateRetellAgent(agent.retell_agent_id, {
         name,
         prompt,
@@ -91,11 +99,16 @@ export default function AgentDetail() {
         language,
         tools
       });
+
+      console.log('Actualizando en base de datos local...');
       await updateAgent(agentId, { name, prompt, voice_id: voiceId, language, transfers });
+
+      console.log('Recargando agente...');
       await loadAgent();
       setShowPromptEditor(false);
-      alert('Agente actualizado correctamente');
+      alert('✅ Agente actualizado correctamente\n\nRevisa la consola del navegador para ver los detalles de la actualización.');
     } catch (err) {
+      console.error('Error detallado:', err);
       alert('Error al guardar: ' + (err instanceof Error ? err.message : 'Error desconocido'));
     } finally {
       setSaving(false);
@@ -377,11 +390,28 @@ export default function AgentDetail() {
                     <span className="text-gray-600">Transferencias:</span>
                     <span className="text-gray-900 font-medium">{transfers.length}</span>
                   </div>
-                  <div className="flex justify-between py-2">
+                  <div className="flex justify-between py-2 border-b border-gray-200">
                     <span className="text-gray-600">Cal.com Tools:</span>
                     <span className="text-gray-900 font-medium">{calcomEvents.length > 0 ? 'Activas' : 'No configuradas'}</span>
                   </div>
+                  <div className="flex justify-between py-2 border-b border-gray-200">
+                    <span className="text-gray-600">Voice ID Actual:</span>
+                    <span className="text-gray-900 font-mono text-xs">{agent.voice_id}</span>
+                  </div>
+                  <div className="py-2">
+                    <span className="text-gray-600 block mb-1">Retell Agent ID:</span>
+                    <span className="text-gray-900 font-mono text-xs break-all">{agent.retell_agent_id}</span>
+                  </div>
                 </div>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                <p className="text-xs text-yellow-900 font-medium mb-2">🔧 Diagnóstico de Problemas</p>
+                <ul className="text-xs text-yellow-800 space-y-1">
+                  <li>• Si el agente no se guarda, verifica la consola del navegador (F12)</li>
+                  <li>• El Voice ID actual debe coincidir con la voz seleccionada</li>
+                  <li>• Si hay error 404, elimina el agente y créalo de nuevo</li>
+                </ul>
               </div>
             </div>
           </div>

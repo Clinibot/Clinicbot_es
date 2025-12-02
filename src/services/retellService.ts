@@ -347,13 +347,40 @@ export async function updateRetellAgent(
     tools?: Array<any>;
   }
 ): Promise<void> {
-  const agent = await getRetellAgent(agentId);
+  console.log('=== Updating Retell Agent ===');
+  console.log('Agent ID received:', agentId);
+  console.log('Agent ID length:', agentId?.length);
+  console.log('Agent ID type:', typeof agentId);
+
+  if (!agentId || agentId === 'undefined' || agentId === 'null') {
+    throw new Error('❌ El agente no tiene un retell_agent_id válido. El agente podría no haberse creado correctamente en Retell AI.');
+  }
+
+  // First, verify the agent exists
+  console.log('Verificando que el agente existe en Retell AI...');
+  let agent;
+  try {
+    agent = await getRetellAgent(agentId);
+    console.log('✓ Agente encontrado en Retell AI');
+  } catch (error) {
+    console.error('❌ Error al obtener el agente de Retell AI:', error);
+    throw new Error(
+      `No se pudo encontrar el agente en Retell AI (ID: ${agentId}). ` +
+      'Posibles causas:\n' +
+      '1. El agente fue eliminado de Retell AI pero sigue en tu base de datos\n' +
+      '2. El retell_agent_id guardado es incorrecto\n' +
+      '3. Tu API key no tiene permisos para acceder a este agente\n\n' +
+      'Solución: Elimina este agente y créalo de nuevo.'
+    );
+  }
 
   if (!agent.response_engine?.llm_id) {
     throw new Error('No se pudo obtener el llm_id del agente');
   }
 
+  // Update LLM if needed
   if (updates.prompt !== undefined || updates.tools !== undefined) {
+    console.log('Actualizando LLM...');
     await updateRetellLLM(
       agent.response_engine.llm_id,
       updates.prompt !== undefined ? updates.prompt : agent.response_engine.general_prompt,
@@ -361,10 +388,14 @@ export async function updateRetellAgent(
     );
   }
 
+  // Prepare agent update payload
   const payload: UpdateAgentPayload = {};
 
   if (updates.name !== undefined) payload.agent_name = updates.name;
-  if (updates.voiceId !== undefined) payload.voice_id = updates.voiceId;
+  if (updates.voiceId !== undefined) {
+    console.log('Updating voice to:', updates.voiceId);
+    payload.voice_id = updates.voiceId;
+  }
   if (updates.language !== undefined) payload.language = updates.language;
 
   if (Object.keys(payload).length === 0) {
@@ -372,8 +403,7 @@ export async function updateRetellAgent(
     return;
   }
 
-  console.log('=== Updating Retell Agent ===');
-  console.log('Agent ID:', agentId);
+  console.log('Actualizando campos del agente...');
   console.log('Update payload:', JSON.stringify(payload, null, 2));
 
   const response = await fetch(`https://api.retellai.com/update-agent/${agentId}`, {
@@ -385,13 +415,27 @@ export async function updateRetellAgent(
     body: JSON.stringify(payload),
   });
 
+  console.log('Response status:', response.status, response.statusText);
+
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Retell API error:', errorText);
+    console.error('❌ Retell API error:', errorText);
+
+    if (response.status === 404) {
+      throw new Error(
+        `Agente no encontrado en Retell AI (404).\n\n` +
+        `ID del agente: ${agentId}\n\n` +
+        'El agente podría haber sido eliminado de Retell AI pero sigue en tu base de datos local. ' +
+        'Por favor, elimina este agente y créalo de nuevo.'
+      );
+    }
+
     throw new Error(`Failed to update Retell agent: ${response.status} ${errorText}`);
   }
 
+  const updatedAgent = await response.json();
   console.log('✅ Agent updated successfully');
+  console.log('Voice ID confirmado en respuesta:', updatedAgent.voice_id);
 }
 
 export async function deleteRetellAgent(agentId: string): Promise<void> {
