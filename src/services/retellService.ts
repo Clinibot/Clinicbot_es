@@ -314,16 +314,21 @@ export async function createRetellAgent(
     });
 
     if (response.status === 404) {
+      // Log the exact payload that was sent for debugging
+      console.error('Payload that caused 404:', JSON.stringify(minimalPayload, null, 2));
+
       throw new Error(
-        'Error 404: El endpoint /create-agent no está disponible. ' +
+        `Error 404 al crear agente en Retell AI.\n\n` +
+        `Idioma enviado: "${language}"\n` +
+        `Voice ID: "${voiceId}"\n\n` +
         'Posibles causas:\n' +
-        '1. Tu cuenta de Retell AI podría necesitar verificación o activación\n' +
-        '2. La API key podría no tener los permisos necesarios\n' +
-        '3. Tu plan podría no incluir acceso a la API de agentes\n\n' +
-        'Por favor verifica tu cuenta en https://beta.retellai.com/dashboard y asegúrate de que:\n' +
-        '- Tu cuenta esté completamente activada\n' +
-        '- Tu API key tenga permisos completos\n' +
-        '- Tu plan incluya acceso a la API de creación de agentes'
+        '1. El código de idioma no es soportado por Retell AI\n' +
+        '   - Idiomas confirmados: es-ES, en-US, en-GB, multi, fr-FR, de-DE\n' +
+        '   - Evita usar: ca-ES (catalán), es-419 (latam)\n' +
+        '2. Tu cuenta de Retell AI podría necesitar activación\n' +
+        '3. La API key no tiene permisos completos\n\n' +
+        'Solución: Cambia el idioma a "Español (España)" o "Multi-idioma" e intenta de nuevo.\n' +
+        'Más info: https://docs.retellai.com/agent/language'
       );
     }
 

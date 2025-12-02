@@ -65,18 +65,21 @@ export const VOICES = [
   { id: '851ejYcv2BoNPjrkw93G', name: 'Toni - Voz Española (Masculino)' },
 ];
 
+// Language codes supported by Retell AI
+// Documentation: https://docs.retellai.com/agent/language
+// Note: 'multi' supports multilingual (English + Spanish primarily)
 export const LANGUAGES = [
-  { id: 'multi', name: 'Multi-idioma (Recomendado)' },
   { id: 'es-ES', name: 'Español (España)' },
-  { id: 'es-419', name: 'Español (Latinoamérica)' },
   { id: 'en-US', name: 'English (US)' },
   { id: 'en-GB', name: 'English (UK)' },
-  { id: 'ca-ES', name: 'Català' },
+  { id: 'multi', name: 'Multi-idioma (Español + Inglés)' },
   { id: 'fr-FR', name: 'Français' },
   { id: 'de-DE', name: 'Deutsch' },
   { id: 'pt-PT', name: 'Português (Portugal)' },
   { id: 'pt-BR', name: 'Português (Brasil)' },
   { id: 'it-IT', name: 'Italiano' },
+  { id: 'ja-JP', name: '日本語 (Japanese)' },
+  { id: 'nl-NL', name: 'Nederlands' },
 ];
 
 export const DEFAULT_PROMPT = `Eres Sofía, una recepcionista IA profesional y amable para una clínica médica. Tu objetivo es proporcionar un servicio de calidad al contestar llamadas, agendar citas, proporcionar información sobre servicios y transferir llamadas cuando sea necesario.
