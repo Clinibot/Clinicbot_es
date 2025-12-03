@@ -114,6 +114,13 @@ export default function ClinicDetail() {
                 <BarChart3 className="w-4 h-4" />
                 Ver Analíticas
               </button>
+              <button
+                onClick={() => navigate(`/clinic/${clinicId}/phones`)}
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Phone className="w-4 h-4" />
+                Gestionar Teléfonos
+              </button>
             </div>
           </div>
 
