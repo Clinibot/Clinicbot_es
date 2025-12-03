@@ -254,29 +254,65 @@ export default function Analytics() {
     });
   }
 
-  // Preparar datos para gráfico de sentimientos
-  function prepareSentimentData() {
-    const sentiments = {
-      positive: 0,
-      negative: 0,
-      neutral: 0,
-    };
+  // Preparar datos para gráfico de tasa de éxito
+  function prepareSuccessRateData() {
+    if (filteredCalls.length === 0) {
+      return [];
+    }
 
-    filteredCalls.forEach(call => {
-      const sentiment = call.metadata?.sentiment?.toLowerCase();
-      if (sentiment === 'positive') {
-        sentiments.positive++;
-      } else if (sentiment === 'negative') {
-        sentiments.negative++;
-      } else {
-        sentiments.neutral++;
+    let successfulCalls = 0;
+
+    // Si es "default", usar el comportamiento de llamadas completadas
+    if (selectedMetricId === 'default') {
+      successfulCalls = filteredCalls.filter(c => c.call_status === 'completed').length;
+    } else {
+      // Buscar la métrica seleccionada
+      let selectedMetric: SuccessMetric | null = null;
+      for (const agent of agents) {
+        if (agent.success_metrics) {
+          const metric = agent.success_metrics.find(m => m.id === selectedMetricId);
+          if (metric) {
+            selectedMetric = metric;
+            break;
+          }
+        }
       }
-    });
+
+      if (selectedMetric) {
+        // Calcular éxito basado en el tipo de métrica
+        for (const call of filteredCalls) {
+          let isSuccessful = false;
+
+          switch (selectedMetric.type) {
+            case 'boolean':
+              if (selectedMetric.custom_data_key && call.metadata?.custom_data) {
+                isSuccessful = call.metadata.custom_data[selectedMetric.custom_data_key] === true;
+              }
+              break;
+
+            case 'duration':
+              if (selectedMetric.min_duration) {
+                isSuccessful = call.duration_seconds >= selectedMetric.min_duration;
+              }
+              break;
+
+            case 'text':
+              if (selectedMetric.custom_data_key && selectedMetric.expected_value && call.metadata?.custom_data) {
+                isSuccessful = call.metadata.custom_data[selectedMetric.custom_data_key] === selectedMetric.expected_value;
+              }
+              break;
+          }
+
+          if (isSuccessful) successfulCalls++;
+        }
+      }
+    }
+
+    const unsuccessfulCalls = filteredCalls.length - successfulCalls;
 
     return [
-      { name: 'Positivo', value: sentiments.positive, color: COLORS.positive },
-      { name: 'Negativo', value: sentiments.negative, color: COLORS.negative },
-      { name: 'Neutral', value: sentiments.neutral, color: COLORS.neutral },
+      { name: 'Exitosas', value: successfulCalls, color: COLORS.positive },
+      { name: 'No Exitosas', value: unsuccessfulCalls, color: COLORS.neutral },
     ].filter(item => item.value > 0);
   }
 
@@ -314,7 +350,7 @@ export default function Analytics() {
 
   const filteredCalls = calls;
   const timeSeriesData = prepareTimeSeriesData();
-  const sentimentData = prepareSentimentData();
+  const successRateData = prepareSuccessRateData();
   const durationData = prepareDurationData();
   const agentComparisonData = prepareAgentComparisonData();
 
@@ -602,25 +638,44 @@ export default function Analytics() {
             </ResponsiveContainer>
           </div>
 
-          {/* Gráfico de Sentimientos */}
+          {/* Gráfico de Tasa de Éxito */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <PieChart className="w-5 h-5 text-purple-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Distribución de Sentimientos</h3>
+              <Target className="w-5 h-5 text-purple-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Tasa de Éxito</h3>
             </div>
-            <ResponsiveContainer width="100%" height={300}>
+            <div className="mb-3">
+              <select
+                value={selectedMetricId}
+                onChange={(e) => setSelectedMetricId(e.target.value)}
+                className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="default">Llamadas Completadas</option>
+                {getAvailableMetrics().map((metric) => (
+                  <option key={metric.id} value={metric.id}>
+                    {metric.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <ResponsiveContainer width="100%" height={250}>
               <RechartsPie>
                 <Pie
-                  data={sentimentData}
+                  data={successRateData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={(entry) => `${entry.name}: ${entry.value}`}
-                  outerRadius={100}
+                  label={(entry) => {
+                    const percentage = filteredCalls.length > 0
+                      ? Math.round((entry.value / filteredCalls.length) * 100)
+                      : 0;
+                    return `${entry.name}: ${entry.value} (${percentage}%)`;
+                  }}
+                  outerRadius={90}
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {sentimentData.map((entry, index) => (
+                  {successRateData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
