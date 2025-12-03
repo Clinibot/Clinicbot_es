@@ -25,6 +25,16 @@ interface WebhookPayload {
       call_successful?: boolean;
       in_voicemail?: boolean;
     };
+    call_cost?: {
+      product_costs?: Array<{
+        product: string;
+        unit_price: number;
+        cost: number;
+      }>;
+      total_duration_seconds?: number;
+      total_duration_unit_price?: number;
+      combined_cost?: number;
+    };
     disconnection_reason?: string;
     public_log_url?: string;
   };
@@ -79,7 +89,24 @@ Deno.serve(async (req: Request) => {
       ? Math.floor((call.end_timestamp - call.start_timestamp) / 1000)
       : 0;
 
-    const externalCost = 0.05;
+    // Obtener el costo real de Retell AI o calcular basado en duración
+    let externalCost = 0;
+
+    if (call.call_cost?.combined_cost !== undefined) {
+      // Usar el costo real de la API (viene en centavos de USD)
+      externalCost = call.call_cost.combined_cost / 100;
+    } else if (call.call_cost?.product_costs && call.call_cost.product_costs.length > 0) {
+      // Sumar los costos de productos individuales (en centavos de USD)
+      externalCost = call.call_cost.product_costs.reduce((sum, pc) => sum + pc.cost, 0) / 100;
+    } else {
+      // Fallback: estimar basado en duración (aprox $0.10/min = $0.00167/seg)
+      externalCost = (durationSeconds / 60) * 0.10;
+    }
+
+    // Convertir de USD a EUR (aproximadamente 1 USD = 0.92 EUR)
+    externalCost = externalCost * 0.92;
+
+    // Aplicar markup del 20%
     const userCost = externalCost * 1.2;
 
     const callRecord = {

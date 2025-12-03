@@ -69,18 +69,13 @@ export default function Analytics() {
       setClinic(clinicData);
       setAgents(agentsData);
 
-      // Aplicar markup del 20% al user_cost
-      const callsWithMarkup = allCallsData.map(call => ({
-        ...call,
-        user_cost: call.user_cost * 1.2, // Añadir 20%
-      }));
-
+      // El markup ya está aplicado en el backend, no aplicar de nuevo
       // Filtrar por rango de fechas
       const { start, end } = getDateRange();
-      let filteredCalls = callsWithMarkup;
+      let filteredCalls = allCallsData;
 
       if (start && end) {
-        filteredCalls = callsWithMarkup.filter(call => {
+        filteredCalls = allCallsData.filter(call => {
           const callDate = new Date(call.started_at);
           return callDate >= start && callDate <= end;
         });
