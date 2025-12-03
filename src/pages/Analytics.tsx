@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, Clock, DollarSign, TrendingUp, RefreshCw, FileText, User, Calendar } from 'lucide-react';
+import { ArrowLeft, Phone, Clock, DollarSign, TrendingUp, RefreshCw, FileText, User, Calendar, Target } from 'lucide-react';
 import { getCallHistory, getCallAnalytics, syncCallsForClinic, CallRecord, CallAnalytics } from '../services/callHistoryService';
 import { getClinic } from '../services/clinicService';
 import { getClinicAgents } from '../services/agentService';
-import { Agent } from '../types';
+import { Agent, SuccessMetric } from '../types';
 
 type DateFilter = 'today' | 'week' | 'month' | 'custom' | 'all';
 
@@ -22,6 +22,7 @@ export default function Analytics() {
   const [customEndDate, setCustomEndDate] = useState('');
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>('all');
+  const [selectedMetricId, setSelectedMetricId] = useState<string>('default');
 
   useEffect(() => {
     loadData();
@@ -133,6 +134,88 @@ export default function Analytics() {
       style: 'currency',
       currency: 'EUR',
     }).format(amount);
+  }
+
+  function calculateSuccessRate(): number {
+    if (filteredCalls.length === 0) return 0;
+
+    // Si es "default", usar el comportamiento antiguo (llamadas completadas)
+    if (selectedMetricId === 'default') {
+      const completedCalls = filteredCalls.filter(c => c.call_status === 'completed').length;
+      return Math.round((completedCalls / filteredCalls.length) * 100);
+    }
+
+    // Buscar la métrica seleccionada en los agentes
+    let selectedMetric: SuccessMetric | null = null;
+    for (const agent of agents) {
+      if (agent.success_metrics) {
+        const metric = agent.success_metrics.find(m => m.id === selectedMetricId);
+        if (metric) {
+          selectedMetric = metric;
+          break;
+        }
+      }
+    }
+
+    if (!selectedMetric) return 0;
+
+    let successfulCalls = 0;
+
+    // Calcular éxito basado en el tipo de métrica
+    for (const call of filteredCalls) {
+      let isSuccessful = false;
+
+      switch (selectedMetric.type) {
+        case 'boolean':
+          // Verificar si el campo custom_data tiene el valor true
+          if (selectedMetric.custom_data_key && call.metadata?.custom_data) {
+            isSuccessful = call.metadata.custom_data[selectedMetric.custom_data_key] === true;
+          }
+          break;
+
+        case 'duration':
+          // Verificar si la duración es mayor o igual al mínimo
+          if (selectedMetric.min_duration) {
+            isSuccessful = call.duration_seconds >= selectedMetric.min_duration;
+          }
+          break;
+
+        case 'text':
+          // Verificar si el campo custom_data tiene el valor esperado
+          if (selectedMetric.custom_data_key && selectedMetric.expected_value && call.metadata?.custom_data) {
+            isSuccessful = call.metadata.custom_data[selectedMetric.custom_data_key] === selectedMetric.expected_value;
+          }
+          break;
+      }
+
+      if (isSuccessful) successfulCalls++;
+    }
+
+    return Math.round((successfulCalls / filteredCalls.length) * 100);
+  }
+
+  function getAvailableMetrics(): SuccessMetric[] {
+    if (selectedAgentId === 'all') {
+      // Si está seleccionado "Todos", recopilar todas las métricas únicas de todos los agentes
+      const allMetrics: SuccessMetric[] = [];
+      const seenMetricIds = new Set<string>();
+
+      for (const agent of agents) {
+        if (agent.success_metrics) {
+          for (const metric of agent.success_metrics) {
+            if (!seenMetricIds.has(metric.id)) {
+              allMetrics.push(metric);
+              seenMetricIds.add(metric.id);
+            }
+          }
+        }
+      }
+      return allMetrics;
+    } else {
+      // Si hay un agente específico seleccionado, mostrar solo sus métricas
+      const agent = agents.find(a => a.id === selectedAgentId);
+      return agent?.success_metrics || [];
+    }
   }
 
   const filteredCalls = calls;
@@ -304,17 +387,26 @@ export default function Analytics() {
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-2">
                 <TrendingUp className="w-8 h-8 text-orange-600" />
+                <Target className="w-5 h-5 text-green-500" />
               </div>
               <p className="text-sm text-gray-500 mb-1">Tasa de Éxito</p>
               <p className="text-3xl font-bold text-gray-900">
-                {analytics.totalCalls > 0
-                  ? Math.round((analytics.completedCalls / analytics.totalCalls) * 100)
-                  : 0}
-                %
+                {calculateSuccessRate()}%
               </p>
-              <p className="text-xs text-gray-500 mt-2">
-                De {analytics.totalCalls} llamadas totales
-              </p>
+              <div className="mt-3">
+                <select
+                  value={selectedMetricId}
+                  onChange={(e) => setSelectedMetricId(e.target.value)}
+                  className="w-full text-xs px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="default">Llamadas Completadas</option>
+                  {getAvailableMetrics().map((metric) => (
+                    <option key={metric.id} value={metric.id}>
+                      {metric.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         )}
