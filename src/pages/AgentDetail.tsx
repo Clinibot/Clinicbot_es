@@ -185,7 +185,7 @@ export default function AgentDetail() {
       console.log('Recargando agente...');
       await loadAgent();
       setShowPromptEditor(false);
-      alert('✅ Agente actualizado correctamente\n\nLas instrucciones de transferencia se han añadido automáticamente al prompt.');
+      alert('Agente actualizado correctamente\n\nLas instrucciones de transferencia se han añadido automáticamente al prompt.');
     } catch (err) {
       console.error('Error detallado:', err);
       alert('Error al guardar: ' + (err instanceof Error ? err.message : 'Error desconocido'));
@@ -336,7 +336,7 @@ export default function AgentDetail() {
             onClick={() => setActiveTab('transfers')}
             className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
               activeTab === 'transfers'
-                ? 'bg-white text-purple-600 shadow-md border-2 border-purple-600'
+                ? 'bg-white text-slate-700 shadow-md border-2 border-purple-600'
                 : 'bg-white text-gray-600 border-2 border-transparent hover:border-gray-300'
             }`}
           >
@@ -362,10 +362,10 @@ export default function AgentDetail() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Agente</label>
-                    <span className={`inline-flex px-4 py-2 rounded-full text-sm font-medium ${
-                      agent.agent_type === 'inbound' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'
+                    <span className={`inline-flex px-4 py-2 rounded-lg text-sm font-medium ${
+                      agent.agent_type === 'inbound' ? 'bg-slate-100 text-slate-700' : 'bg-slate-100 text-slate-700'
                     }`}>
-                      {agent.agent_type === 'inbound' ? '📞 Llamadas Entrantes' : '📲 Llamadas Salientes'}
+                      {agent.agent_type === 'inbound' ? 'Llamadas Entrantes' : 'Llamadas Salientes'}
                     </span>
                   </div>
                   <div>
@@ -396,9 +396,9 @@ export default function AgentDetail() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
                       <span className={`inline-flex px-4 py-3 rounded-lg text-sm font-medium ${
-                        agent.enabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        agent.enabled ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-gray-100 text-gray-600 border border-gray-200'
                       }`}>
-                        {agent.enabled ? '✓ Activo' : '✗ Inactivo'}
+                        {agent.enabled ? 'Activo' : 'Inactivo'}
                       </span>
                     </div>
                   </div>
@@ -406,22 +406,21 @@ export default function AgentDetail() {
               </div>
 
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-lg font-semibold flex items-center gap-2">
-                      <Target className="w-5 h-5 text-green-600" />
+                    <h2 className="text-lg font-semibold text-gray-900">
                       Métricas de Éxito
                     </h2>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Define qué hace que una llamada sea exitosa para este agente
+                    <p className="text-sm text-gray-500 mt-1">
+                      Define qué hace que una llamada sea exitosa
                     </p>
                   </div>
                   <button
                     onClick={addSuccessMetric}
-                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                    className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
-                    Agregar Métrica
+                    Agregar
                   </button>
                 </div>
 
@@ -434,10 +433,10 @@ export default function AgentDetail() {
                 ) : (
                   <div className="space-y-4">
                     {successMetrics.map((metric, index) => (
-                      <div key={metric.id} className="border border-gray-200 rounded-lg p-4 relative hover:border-green-300 transition-colors">
+                      <div key={metric.id} className="border border-gray-200 rounded-lg p-4 relative hover:border-slate-300 transition-colors">
                         <button
                           onClick={() => removeSuccessMetric(index)}
-                          className="absolute top-3 right-3 text-red-600 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition-colors"
+                          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 hover:bg-gray-50 p-1.5 rounded-lg transition-colors"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -453,7 +452,7 @@ export default function AgentDetail() {
                                 value={metric.name}
                                 onChange={(e) => updateSuccessMetric(index, { name: e.target.value })}
                                 placeholder="Cita agendada"
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                               />
                             </div>
 
@@ -469,11 +468,11 @@ export default function AgentDetail() {
                                   min_duration: undefined,
                                   expected_value: undefined
                                 })}
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                               >
-                                <option value="boolean">✓ Sí/No (Boolean)</option>
-                                <option value="duration">⏱ Duración Mínima</option>
-                                <option value="text">📝 Valor de Texto</option>
+                                <option value="boolean">Booleano (Sí/No)</option>
+                                <option value="duration">Duración Mínima</option>
+                                <option value="text">Valor de Texto</option>
                               </select>
                             </div>
                           </div>
@@ -488,7 +487,7 @@ export default function AgentDetail() {
                                 value={metric.custom_data_key || ''}
                                 onChange={(e) => updateSuccessMetric(index, { custom_data_key: e.target.value })}
                                 placeholder="appointment_booked"
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                               />
                               <p className="text-xs text-gray-500 mt-1">
                                 Se considerará exitosa si este campo es true en custom_data
@@ -506,7 +505,7 @@ export default function AgentDetail() {
                                 value={metric.min_duration || ''}
                                 onChange={(e) => updateSuccessMetric(index, { min_duration: parseInt(e.target.value) || 0 })}
                                 placeholder="60"
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                               />
                               <p className="text-xs text-gray-500 mt-1">
                                 Se considerará exitosa si la llamada dura al menos este tiempo
@@ -525,7 +524,7 @@ export default function AgentDetail() {
                                   value={metric.custom_data_key || ''}
                                   onChange={(e) => updateSuccessMetric(index, { custom_data_key: e.target.value })}
                                   placeholder="appointment_status"
-                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                                 />
                               </div>
                               <div>
@@ -537,7 +536,7 @@ export default function AgentDetail() {
                                   value={metric.expected_value || ''}
                                   onChange={(e) => updateSuccessMetric(index, { expected_value: e.target.value })}
                                   placeholder="confirmed"
-                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">
                                   Se considerará exitosa si este campo tiene exactamente este valor
@@ -551,9 +550,9 @@ export default function AgentDetail() {
                   </div>
                 )}
 
-                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-900">
-                  <p className="font-medium mb-1">💡 Cómo funcionan las métricas:</p>
-                  <ul className="list-disc list-inside space-y-1 text-blue-800">
+                <div className="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-700">
+                  <p className="font-medium mb-1">Cómo funcionan las métricas:</p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600">
                     <li><strong>Boolean (Sí/No):</strong> Se considera exitosa si el campo en custom_data es true</li>
                     <li><strong>Duración:</strong> Se considera exitosa si la llamada dura más del tiempo especificado</li>
                     <li><strong>Texto:</strong> Se considera exitosa si el campo custom_data contiene el valor esperado</li>
@@ -566,17 +565,16 @@ export default function AgentDetail() {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-lg font-semibold flex items-center gap-2">
-                      <Zap className="w-5 h-5 text-purple-600" />
-                      Conexiones con CRM o Calendario
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Conexiones Externas
                     </h2>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Conecta tu agente con servicios externos mediante webhooks
+                    <p className="text-sm text-gray-500 mt-1">
+                      Conecta con CRM, calendarios u otros servicios
                     </p>
                   </div>
                   <button
                     onClick={addCustomFunction}
-                    className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                    className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     Nueva Conexión
@@ -584,25 +582,17 @@ export default function AgentDetail() {
                 </div>
 
                 {customFunctions.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border-2 border-dashed border-purple-200">
-                    <Zap className="w-16 h-16 mx-auto mb-4 text-purple-300" />
-                    <p className="text-base font-medium">No hay conexiones configuradas</p>
-                    <p className="text-sm mt-2">Conecta tu agente con CRM, calendarios u otros servicios</p>
-                    <button
-                      onClick={addCustomFunction}
-                      className="mt-4 inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Crear Primera Conexión
-                    </button>
+                  <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-sm font-medium text-gray-600">No hay conexiones configuradas</p>
+                    <p className="text-xs text-gray-500 mt-1">Conecta tu agente con CRM, calendarios u otros servicios</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {customFunctions.map((func, index) => (
-                      <div key={func.id} className="border-2 border-purple-200 rounded-lg p-5 relative hover:border-purple-400 transition-all bg-gradient-to-br from-white to-purple-50">
+                      <div key={func.id} className="border border-gray-200 rounded-lg p-5 relative hover:border-slate-300 transition-all bg-white">
                         <button
                           onClick={() => removeCustomFunction(index)}
-                          className="absolute top-3 right-3 text-red-600 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition-colors"
+                          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 hover:bg-gray-50 p-1.5 rounded-lg transition-colors"
                         >
                           <X className="w-5 h-5" />
                         </button>
@@ -611,8 +601,8 @@ export default function AgentDetail() {
                           {/* Nombre y Estado */}
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                                <MessageSquare className="w-3.5 h-3.5 text-purple-600" />
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                
                                 Nombre para Mostrar
                               </label>
                               <input
@@ -620,13 +610,13 @@ export default function AgentDetail() {
                                 value={func.display_name}
                                 onChange={(e) => updateCustomFunction(index, { display_name: e.target.value })}
                                 placeholder="Agendar Cita en CRM"
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                               />
                             </div>
 
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                                <Settings className="w-3.5 h-3.5 text-purple-600" />
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                
                                 Nombre de la Función
                               </label>
                               <input
@@ -634,7 +624,7 @@ export default function AgentDetail() {
                                 value={func.name}
                                 onChange={(e) => updateCustomFunction(index, { name: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
                                 placeholder="agendar_cita"
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 font-mono"
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 font-mono"
                               />
                               <p className="text-xs text-gray-500 mt-1">
                                 Sin espacios, solo letras minúsculas y guiones bajos
@@ -645,21 +635,21 @@ export default function AgentDetail() {
                           {/* Descripción */}
                           <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">
-                              📝 Descripción (qué hace y qué parámetros recibe)
+                              Descripción (qué hace y qué parámetros recibe)
                             </label>
                             <textarea
                               value={func.description}
                               onChange={(e) => updateCustomFunction(index, { description: e.target.value })}
                               placeholder="Esta función agenda una cita en el CRM. Recibe: nombre_paciente (string), telefono (string), fecha_preferida (string)"
                               rows={3}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                             />
                           </div>
 
                           {/* URL del Webhook */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                              <Globe className="w-3.5 h-3.5 text-purple-600" />
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              
                               URL del Webhook
                             </label>
                             <input
@@ -667,14 +657,14 @@ export default function AgentDetail() {
                               value={func.webhook_url}
                               onChange={(e) => updateCustomFunction(index, { webhook_url: e.target.value })}
                               placeholder="https://tu-crm.com/api/webhook"
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 font-mono"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 font-mono"
                             />
                           </div>
 
                           {/* API Key / Contraseña */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
-                              <Key className="w-3.5 h-3.5 text-purple-600" />
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              
                               Contraseña o API Key (opcional)
                             </label>
                             <div className="relative">
@@ -683,7 +673,7 @@ export default function AgentDetail() {
                                 value={func.api_key}
                                 onChange={(e) => updateCustomFunction(index, { api_key: e.target.value })}
                                 placeholder="sk_tu_api_key_secreta"
-                                className="w-full px-3 py-2 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 font-mono"
+                                className="w-full px-3 py-2 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 font-mono"
                               />
                               <button
                                 type="button"
@@ -699,16 +689,16 @@ export default function AgentDetail() {
                           </div>
 
                           {/* Estado Activo/Inactivo */}
-                          <div className="flex items-center gap-2 pt-2 border-t border-purple-100">
+                          <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
                             <input
                               type="checkbox"
                               id={`enabled-${func.id}`}
                               checked={func.enabled}
                               onChange={(e) => updateCustomFunction(index, { enabled: e.target.checked })}
-                              className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                              className="w-4 h-4 text-slate-700 border-gray-300 rounded focus:ring-slate-500"
                             />
                             <label htmlFor={`enabled-${func.id}`} className="text-sm font-medium text-gray-700 cursor-pointer">
-                              {func.enabled ? '✅ Activa' : '❌ Desactivada'}
+                              {func.enabled ? 'Activa' : 'Desactivada'}
                             </label>
                           </div>
                         </div>
@@ -717,9 +707,9 @@ export default function AgentDetail() {
                   </div>
                 )}
 
-                <div className="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-4 text-xs text-purple-900">
-                  <p className="font-medium mb-2">💡 Cómo funciona:</p>
-                  <ul className="list-disc list-inside space-y-1.5 text-purple-800">
+                <div className="mt-4 bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs text-slate-800">
+                  <p className="font-medium mb-2">Cómo funciona:</p>
+                  <ul className="list-disc list-inside space-y-1.5 text-slate-700">
                     <li><strong>Súper fácil:</strong> Solo necesitas poner el nombre, la URL de tu webhook y listo</li>
                     <li><strong>Automático:</strong> El agente ejecutará esta función cuando sea necesario durante la llamada</li>
                     <li><strong>Datos enviados:</strong> Tu webhook recibirá los parámetros que describas en formato JSON</li>
@@ -762,9 +752,9 @@ export default function AgentDetail() {
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-600 resize-y"
                       style={{ minHeight: '500px', background: '#fafafa' }}
                     />
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
-                      <p className="font-medium mb-1">💡 Formato del Prompt:</p>
-                      <ul className="list-disc list-inside space-y-1 text-blue-800">
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+                      <p className="font-medium mb-1">Formato del Prompt:</p>
+                      <ul className="list-disc list-inside space-y-1 text-gray-600">
                         <li>Usa formato Markdown con títulos (# y ##)</li>
                         <li>Escribe todo con letras, evita números y símbolos</li>
                         <li>Usa viñetas (-) en lugar de listas numeradas</li>
@@ -781,7 +771,7 @@ export default function AgentDetail() {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                   <h3 className="font-semibold text-gray-900 mb-3">Voz Seleccionada</h3>
                   <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-                    <p className="text-lg font-bold text-blue-900">{selectedVoice.name}</p>
+                    <p className="text-lg font-bold text-gray-700">{selectedVoice.name}</p>
                     <p className="text-sm text-blue-700 mt-1">ElevenLabs Premium Voice</p>
                   </div>
                 </div>
@@ -852,9 +842,9 @@ export default function AgentDetail() {
                         </div>
                       );
                     })}
-                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-xs text-blue-900 font-medium mb-1">✓ Tools disponibles:</p>
-                      <ul className="text-xs text-blue-800 space-y-1 ml-3">
+                    <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      <p className="text-xs text-gray-700 font-medium mb-1">Tools disponibles:</p>
+                      <ul className="text-xs text-gray-600 space-y-1 ml-3">
                         <li>• check_availability (consultar disponibilidad)</li>
                         <li>• book_appointment (reservar cita)</li>
                       </ul>
@@ -919,7 +909,7 @@ export default function AgentDetail() {
               </div>
               <button
                 onClick={addTransfer}
-                className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors"
               >
                 <Plus className="w-5 h-5" />
                 Agregar Transferencia
@@ -938,7 +928,7 @@ export default function AgentDetail() {
                   <div key={index} className="border border-gray-200 rounded-lg p-6 relative hover:border-purple-300 transition-colors">
                     <button
                       onClick={() => removeTransfer(index)}
-                      className="absolute top-4 right-4 text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                      className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 hover:bg-gray-50 p-2 rounded-lg transition-colors"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -952,7 +942,7 @@ export default function AgentDetail() {
                           <select
                             value={transfer.type}
                             onChange={(e) => updateTransfer(index, 'type', e.target.value as 'phone' | 'agent')}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                           >
                             <option value="phone">📞 Transferencia a Teléfono</option>
                             <option value="agent">🤖 Transferencia a Agente IA</option>
@@ -968,7 +958,7 @@ export default function AgentDetail() {
                             value={transfer.name}
                             onChange={(e) => updateTransfer(index, 'name', e.target.value)}
                             placeholder="Dr. García / Urgencias"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                           />
                         </div>
                       </div>
@@ -983,7 +973,7 @@ export default function AgentDetail() {
                             value={transfer.phone}
                             onChange={(e) => updateTransfer(index, 'phone', e.target.value)}
                             placeholder="+34 600 123 456"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                           />
                         </div>
                       ) : (
@@ -994,7 +984,7 @@ export default function AgentDetail() {
                           <select
                             value={transfer.agent_id || ''}
                             onChange={(e) => updateTransfer(index, 'agent_id', e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                           >
                             <option value="">Selecciona un agente...</option>
                             {availableAgents.map((ag) => (
@@ -1020,7 +1010,7 @@ export default function AgentDetail() {
                           value={transfer.description}
                           onChange={(e) => updateTransfer(index, 'description', e.target.value)}
                           placeholder="Para emergencias médicas urgentes"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
                         />
                         <p className="text-xs text-gray-500 mt-1">
                           Describe cuándo el agente debe realizar esta transferencia
@@ -1032,9 +1022,9 @@ export default function AgentDetail() {
               </div>
             )}
 
-            <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900">
-              <p className="font-medium mb-2">💡 Cómo funcionan las transferencias:</p>
-              <ul className="list-disc list-inside space-y-1 text-blue-800">
+            <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700">
+              <p className="font-medium mb-2">Cómo funcionan las transferencias:</p>
+              <ul className="list-disc list-inside space-y-1 text-gray-600">
                 <li><strong>Sistema automático:</strong> Cuando guardas, las transferencias se configuran automáticamente como herramientas del agente y se añaden al prompt</li>
                 <li><strong>Dos tipos de transferencias:</strong>
                   <ul className="ml-6 mt-1 space-y-1">
