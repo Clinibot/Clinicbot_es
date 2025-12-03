@@ -6,11 +6,11 @@ import Dashboard from './pages/Dashboard';
 import CreateClinic from './pages/CreateClinic';
 import EditClinic from './pages/EditClinic';
 import ClinicDetail from './pages/ClinicDetail';
-import ManageCalendars from './pages/ManageCalendars';
 import CreateAgent from './pages/CreateAgent';
 import AgentDetail from './pages/AgentDetail';
 import Analytics from './pages/Analytics';
 import ManageCalcom from './pages/ManageCalcom';
+import ManagePhones from './pages/ManagePhones';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -126,6 +126,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ManageCalcom />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clinic/:clinicId/phones"
+            element={
+              <ProtectedRoute>
+                <ManagePhones />
               </ProtectedRoute>
             }
           />
