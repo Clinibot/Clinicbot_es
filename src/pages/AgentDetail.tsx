@@ -20,6 +20,7 @@ interface CalcomEventType {
   duration_minutes: number;
   description: string | null;
   enabled: boolean;
+  external_event_id: number;
 }
 
 export default function AgentDetail() {
@@ -37,6 +38,8 @@ export default function AgentDetail() {
   const [language, setLanguage] = useState('');
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [calcomEvents, setCalcomEvents] = useState<CalcomEventType[]>([]);
+  const [calcomUsername, setCalcomUsername] = useState<string>('');
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   useEffect(() => {
     loadAgent();
@@ -58,12 +61,24 @@ export default function AgentDetail() {
         try {
           const { data: events } = await supabase
             .from('calcom_event_types')
-            .select('id, event_name, duration_minutes, description, enabled')
+            .select('id, event_name, duration_minutes, description, enabled, external_event_id')
             .eq('clinic_id', data.clinic_id)
             .eq('enabled', true)
             .or(`agent_id.is.null,agent_id.eq.${agentId}`);
 
           setCalcomEvents(events || []);
+
+          // Cargar config de Cal.com si existe
+          const { data: config } = await supabase
+            .from('calcom_config')
+            .select('*')
+            .eq('clinic_id', data.clinic_id)
+            .maybeSingle();
+
+          // Intentar extraer username de API key o configuración
+          if (config) {
+            setCalcomUsername('cal.com'); // Placeholder
+          }
         } catch (err) {
           console.error('Error loading Cal.com events:', err);
         }
@@ -341,23 +356,65 @@ export default function AgentDetail() {
                     <Calendar className="w-5 h-5 text-green-600" />
                     <h3 className="font-semibold text-gray-900">Cal.com Tools Activas</h3>
                   </div>
-                  <div className="space-y-3">
-                    {calcomEvents.map((event) => (
-                      <div key={event.id} className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
+                  <div className="space-y-2">
+                    {calcomEvents.map((event) => {
+                      const isExpanded = expandedEventId === event.id;
+                      const bookingUrl = `https://cal.com/${event.external_event_id}`;
+
+                      return (
+                        <div key={event.id} className="border border-green-200 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => setExpandedEventId(isExpanded ? null : event.id)}
+                            className="w-full p-3 bg-green-50 hover:bg-green-100 transition-colors flex items-center justify-between"
+                          >
                             <div className="flex items-center gap-2">
                               <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                              <p className="font-medium text-gray-900 text-sm">{event.event_name}</p>
+                              <span className="font-medium text-gray-900 text-sm">{event.event_name}</span>
+                              <span className="text-xs text-gray-600">({event.duration_minutes} min)</span>
                             </div>
-                            <p className="text-xs text-gray-600 mt-1 ml-6">{event.duration_minutes} minutos</p>
-                            {event.description && (
-                              <p className="text-xs text-gray-500 mt-1 ml-6">{event.description}</p>
+                            {isExpanded ? (
+                              <ChevronUp className="w-4 h-4 text-gray-600" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-gray-600" />
                             )}
-                          </div>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="p-3 bg-white border-t border-green-200 space-y-2">
+                              <div className="text-xs space-y-1.5">
+                                <div className="flex items-start gap-2">
+                                  <span className="text-gray-500 font-medium min-w-[70px]">Duración:</span>
+                                  <span className="text-gray-900">{event.duration_minutes} minutos</span>
+                                </div>
+
+                                {event.description && (
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-gray-500 font-medium min-w-[70px]">Descripción:</span>
+                                    <span className="text-gray-900">{event.description}</span>
+                                  </div>
+                                )}
+
+                                <div className="flex items-start gap-2">
+                                  <span className="text-gray-500 font-medium min-w-[70px]">Event ID:</span>
+                                  <span className="text-gray-900 font-mono text-[10px]">{event.external_event_id}</span>
+                                </div>
+
+                                <div className="pt-2 mt-2 border-t border-gray-100">
+                                  <a
+                                    href={bookingUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium"
+                                  >
+                                    Ver en Cal.com →
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       <p className="text-xs text-blue-900 font-medium mb-1">✓ Tools disponibles:</p>
                       <ul className="text-xs text-blue-800 space-y-1 ml-3">
