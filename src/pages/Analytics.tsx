@@ -16,7 +16,7 @@ export default function Analytics() {
   const [analytics, setAnalytics] = useState<CallAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [selectedCall, setSelectedCall] = useState<CallRecord | null>(null);
+  const [expandedCallId, setExpandedCallId] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<DateFilter>('week');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
@@ -445,242 +445,114 @@ export default function Analytics() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
-                          onClick={() => setSelectedCall(call)}
+                          onClick={() => setExpandedCallId(expandedCallId === call.id ? null : call.id)}
                           className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
                         >
-                          <FileText className="w-4 h-4" />
-                          Ver detalles
+                          {expandedCallId === call.id ? '▼' : '▶'} Ver detalles
                         </button>
                       </td>
                     </tr>
+                    {/* Fila expandible con detalles */}
+                    {expandedCallId === call.id && (
+                      <tr className="bg-gray-50">
+                        <td colSpan={7} className="px-6 py-6">
+                          <div className="space-y-4">
+                            {/* Header con info principal */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4 border-b border-gray-200">
+                              <div>
+                                <p className="text-xs text-gray-500 font-medium mb-1">Teléfono</p>
+                                <p className="text-sm font-semibold text-gray-900">{call.caller_phone || 'Desconocido'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 font-medium mb-1">Duración</p>
+                                <p className="text-sm font-semibold text-gray-900">{formatDuration(call.duration_seconds)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 font-medium mb-1">Coste (con 20% incremento)</p>
+                                <p className="text-sm font-semibold text-green-700">{formatCurrency(call.user_cost)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 font-medium mb-1">Sentimiento</p>
+                                {call.metadata?.sentiment ? (
+                                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                    call.metadata.sentiment.toLowerCase() === 'positive'
+                                      ? 'bg-green-100 text-green-800'
+                                      : call.metadata.sentiment.toLowerCase() === 'negative'
+                                      ? 'bg-red-100 text-red-800'
+                                      : 'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {call.metadata.sentiment.toLowerCase() === 'positive' ? 'Positivo' : call.metadata.sentiment.toLowerCase() === 'negative' ? 'Negativo' : 'Neutral'}
+                                  </span>
+                                ) : (
+                                  <span className="text-sm text-gray-400">-</span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Audio si existe */}
+                            {call.recording_url && (
+                              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                <h4 className="text-sm font-semibold text-gray-900 mb-3">Grabación de Audio</h4>
+                                <audio controls className="w-full">
+                                  <source src={call.recording_url} type="audio/mpeg" />
+                                  Tu navegador no soporta el elemento de audio.
+                                </audio>
+                              </div>
+                            )}
+
+                            {/* Resumen */}
+                            {call.summary && (
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <h4 className="text-sm font-semibold text-blue-900 mb-2">Resumen de la Llamada</h4>
+                                <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{call.summary}</p>
+                              </div>
+                            )}
+
+                            {/* Transcripción */}
+                            {call.transcript && (
+                              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                <h4 className="text-sm font-semibold text-gray-900 mb-3">Transcripción Completa</h4>
+                                <div className="max-h-64 overflow-y-auto">
+                                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-mono">{call.transcript}</p>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Custom Data */}
+                            {call.metadata?.custom_data && Object.keys(call.metadata.custom_data).length > 0 && (
+                              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                <h4 className="text-sm font-semibold text-purple-900 mb-3">Datos Personalizados</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {Object.entries(call.metadata.custom_data).map(([key, value]) => (
+                                    <div key={key} className="flex items-start gap-2 bg-white p-2 rounded">
+                                      <span className="text-xs font-mono text-purple-700 bg-purple-100 px-2 py-1 rounded">
+                                        {key}:
+                                      </span>
+                                      <span className="text-sm text-gray-700 flex-1">
+                                        {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Metadata adicional */}
+                            {call.metadata?.disconnection_reason && (
+                              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                <h4 className="text-sm font-semibold text-amber-900 mb-2">Razón de Desconexión</h4>
+                                <p className="text-sm text-gray-700">{call.metadata.disconnection_reason}</p>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   ))
                 )}
               </tbody>
             </table>
           </div>
-        </div>
-
-        {selectedCall && (
-          <CallDetailModal call={selectedCall} onClose={() => setSelectedCall(null)} />
-        )}
-      </div>
-    </div>
-  );
-}
-
-interface CallDetailModalProps {
-  call: CallRecord;
-  onClose: () => void;
-}
-
-function CallDetailModal({ call, onClose }: CallDetailModalProps) {
-  const [activeTab, setActiveTab] = useState<'summary' | 'transcript' | 'metadata'>('summary');
-
-  function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(amount);
-  }
-
-  function formatDuration(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-gray-900">Detalles de la Llamada</h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-            <div>
-              <p className="text-xs text-gray-500 font-medium">Teléfono</p>
-              <p className="text-sm font-semibold text-gray-900">{call.caller_phone || 'Desconocido'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 font-medium">Nombre</p>
-              <p className="text-sm font-semibold text-gray-900">{call.caller_name || 'Desconocido'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 font-medium">Duración</p>
-              <p className="text-sm font-semibold text-gray-900">{formatDuration(call.duration_seconds)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 font-medium">Estado</p>
-              <p className="text-sm font-semibold text-gray-900">
-                {call.call_status === 'completed' ? 'Completada' : 'No completada'}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 font-medium">Coste</p>
-              <p className="text-sm font-semibold text-green-700">{formatCurrency(call.user_cost)}</p>
-            </div>
-          </div>
-
-          {call.recording_url && (
-            <div className="mb-4 bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm font-semibold text-gray-700 mb-2">Grabación de Audio</p>
-              <audio controls className="w-full">
-                <source src={call.recording_url} type="audio/mpeg" />
-                Tu navegador no soporta el elemento de audio.
-              </audio>
-            </div>
-          )}
-        </div>
-
-        <div className="border-b border-gray-200">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab('summary')}
-              className={`px-6 py-3 text-sm font-medium ${
-                activeTab === 'summary'
-                  ? 'border-b-2 border-blue-600 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Resumen
-            </button>
-            <button
-              onClick={() => setActiveTab('transcript')}
-              className={`px-6 py-3 text-sm font-medium ${
-                activeTab === 'transcript'
-                  ? 'border-b-2 border-blue-600 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Transcripción
-            </button>
-            <button
-              onClick={() => setActiveTab('metadata')}
-              className={`px-6 py-3 text-sm font-medium ${
-                activeTab === 'metadata'
-                  ? 'border-b-2 border-blue-600 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Datos Adicionales
-            </button>
-          </div>
-        </div>
-
-        <div className="p-6 overflow-y-auto max-h-96">
-          {activeTab === 'summary' && (
-            <div className="space-y-4">
-              {call.summary ? (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-blue-900 mb-2">Resumen de la Llamada</h4>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{call.summary}</p>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-8">No hay resumen disponible para esta llamada</p>
-              )}
-
-              {call.intent && (
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-purple-900 mb-2">Intención de la Llamada</h4>
-                  <p className="text-sm text-gray-700">{call.intent}</p>
-                </div>
-              )}
-
-              {call.metadata?.sentiment && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-green-900 mb-2">Sentimiento</h4>
-                  <p className="text-sm text-gray-700">{call.metadata.sentiment}</p>
-                </div>
-              )}
-
-              {call.metadata?.disconnection_reason && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-amber-900 mb-2">Razón de Desconexión</h4>
-                  <p className="text-sm text-gray-700">{call.metadata.disconnection_reason}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'transcript' && (
-            <div>
-              {call.transcript ? (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Transcripción Completa</h4>
-                  <div className="prose prose-sm max-w-none">
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-mono">
-                      {call.transcript}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-8">
-                  No hay transcripción disponible para esta llamada
-                </p>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'metadata' && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 font-medium mb-1">ID de Llamada Externa</p>
-                  <p className="text-sm text-gray-900 font-mono break-all">{call.external_call_id}</p>
-                </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 font-medium mb-1">Tipo de Llamada</p>
-                  <p className="text-sm text-gray-900 font-semibold">{call.call_type || 'No especificado'}</p>
-                </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 font-medium mb-1">Inicio</p>
-                  <p className="text-sm text-gray-900">{new Date(call.started_at).toLocaleString('es-ES')}</p>
-                </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 font-medium mb-1">Fin</p>
-                  <p className="text-sm text-gray-900">
-                    {call.ended_at ? new Date(call.ended_at).toLocaleString('es-ES') : 'En curso'}
-                  </p>
-                </div>
-              </div>
-
-              {call.metadata && Object.keys(call.metadata).length > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-blue-900 mb-3">Metadatos Personalizados</h4>
-                  <div className="space-y-2">
-                    {Object.entries(call.metadata).map(([key, value]) => (
-                      <div key={key} className="flex items-start gap-2">
-                        <span className="text-xs font-mono text-blue-700 bg-blue-100 px-2 py-1 rounded min-w-[120px]">
-                          {key}:
-                        </span>
-                        <span className="text-sm text-gray-700 flex-1">
-                          {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
-          >
-            Cerrar
-          </button>
         </div>
       </div>
     </div>

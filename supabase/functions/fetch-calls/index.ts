@@ -145,6 +145,7 @@ Deno.serve(async (req: Request) => {
           in_voicemail: call.call_analysis?.in_voicemail,
           disconnection_reason: call.disconnection_reason,
           public_log_url: call.public_log_url,
+          custom_data: call.retell_llm_dynamic_variables || {},
         },
       };
     });
