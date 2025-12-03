@@ -55,21 +55,22 @@ export async function deleteAgent(agentId: string) {
   if (error) throw error;
 }
 
-// Voice IDs from Retell AI - Only use officially documented voices
+// Voice IDs - Custom ElevenLabs voices from user's account
+// These are raw ElevenLabs voice IDs connected to Retell AI
 // See: https://docs.retellai.com/api-references/list-voices
-// Note: Use /list-voices API endpoint to get complete list
 export const VOICES = [
-  // ElevenLabs voices (support Spanish)
-  { id: '11labs-Adrian', name: 'Adrian - ElevenLabs (Masculino)' },
+  // ElevenLabs voices - Spanish optimized
+  { id: 'UOIqAnmS11Reiei1Ytkc', name: 'Carolina - Voz Española (Femenino)' },
+  { id: 'kwNLkNjbQHMw9YUFZsHI', name: 'Alejandra - Voz Española (Femenino)' },
+  { id: 'gD1IexrzCvsXPHUuT0s3', name: 'Sara - Voz Española (Femenino)' },
+  { id: 'v3V1d2rk6528UrLKRuy8', name: 'Susi - Voz Española (Femenino)' },
+  { id: '7QQzpAyzlKTVrRzQJmTE', name: 'Dani - Voz Española (Masculino)' },
+  { id: 'HIYif4jehvc9P9A8DYbX', name: 'Pablo - Voz Española (Masculino)' },
+  { id: '851ejYcv2BoNPjrkw93G', name: 'Toni - Voz Española (Masculino)' },
 
-  // OpenAI voices (support multiple languages including Spanish)
+  // OpenAI fallback voices (multilingual support)
   { id: 'openai-Alloy', name: 'Alloy - OpenAI (Neutro)' },
-  { id: 'openai-Ash', name: 'Ash - OpenAI (Masculino)' },
   { id: 'openai-Coral', name: 'Coral - OpenAI (Femenino)' },
-  { id: 'openai-Sage', name: 'Sage - OpenAI (Neutro)' },
-
-  // Deepgram voices (English only)
-  { id: 'deepgram-Angus', name: 'Angus - Deepgram (Masculino)' },
 ];
 
 // Language codes supported by Retell AI

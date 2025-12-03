@@ -343,15 +343,22 @@ export async function createRetellAgent(
         `  • Idioma: "${language}"\n` +
         `  • Voice ID: "${voiceId}"\n` +
         `  • LLM ID: "${llmId}" ✓ (creado exitosamente)\n\n` +
-        `🔍 Causa más probable:\n` +
-        `  Voice ID inválido. Retell AI requiere voice IDs con prefijo:\n` +
-        `  • "11labs-{nombre}" para ElevenLabs\n` +
-        `  • "openai-{nombre}" para OpenAI\n` +
-        `  • "deepgram-{nombre}" para Deepgram\n\n` +
-        `✅ Solución:\n` +
-        `  Los Voice IDs se acaban de actualizar al formato correcto.\n` +
-        `  Recarga la página e intenta crear el agente de nuevo.\n\n` +
-        `📖 Más info: https://docs.retellai.com/api-references/create-agent`
+        `🔍 Posibles causas:\n` +
+        `  1. Voice ID no está conectado a tu cuenta de Retell AI\n` +
+        `  2. La voz de ElevenLabs no ha sido importada a Retell AI\n` +
+        `  3. Permisos insuficientes en la API key\n\n` +
+        `✅ Soluciones:\n` +
+        `  1. Ve al dashboard de Retell AI → Voice Library\n` +
+        `  2. Verifica que las voces de ElevenLabs estén conectadas\n` +
+        `  3. Importa/sincroniza tus voces de ElevenLabs\n` +
+        `  4. Abre la consola (F12) y ejecuta:\n` +
+        `     await fetch('https://api.retellai.com/list-voices', {\n` +
+        `       headers: {'Authorization': 'Bearer ${RETELL_API_KEY?.substring(0, 20)}...'}\n` +
+        `     }).then(r => r.json()).then(console.log)\n` +
+        `     Para ver las voces disponibles\n\n` +
+        `📖 Más info:\n` +
+        `  • https://docs.retellai.com/api-references/list-voices\n` +
+        `  • https://docs.retellai.com/api-references/create-agent`
       );
     }
 
