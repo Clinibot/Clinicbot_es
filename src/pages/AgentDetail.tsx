@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Trash2, Phone, Plus, X, Settings, MessageSquare, Edit, ChevronDown, ChevronUp, Calendar, CheckCircle, Target } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Phone, Plus, X, Settings, MessageSquare, Edit, ChevronDown, ChevronUp, Calendar, CheckCircle, Target, Zap, Globe, Key, Eye, EyeOff } from 'lucide-react';
 import { getAgent, updateAgent, deleteAgent, VOICES, LANGUAGES } from '../services/agentService';
 import { updateRetellAgent, deleteRetellAgent, updateAgentWebhook } from '../services/retellService';
-import { Agent, SuccessMetric } from '../types';
+import { Agent, SuccessMetric, CustomFunction } from '../types';
 import WebPlayground from '../components/WebPlayground';
 import { buildAgentTools } from '../services/agentToolsService';
 import { supabase } from '../lib/supabase';
@@ -40,6 +40,8 @@ export default function AgentDetail() {
   const [language, setLanguage] = useState('');
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [successMetrics, setSuccessMetrics] = useState<SuccessMetric[]>([]);
+  const [customFunctions, setCustomFunctions] = useState<CustomFunction[]>([]);
+  const [showApiKeys, setShowApiKeys] = useState<Record<string, boolean>>({});
   const [calcomEvents, setCalcomEvents] = useState<CalcomEventType[]>([]);
   const [calcomUsername, setCalcomUsername] = useState<string>('');
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
@@ -69,6 +71,9 @@ export default function AgentDetail() {
 
         // Load success metrics
         setSuccessMetrics(data.success_metrics || []);
+
+        // Load custom functions
+        setCustomFunctions(data.custom_functions || []);
 
         // Load other agents from the same clinic for agent-to-agent transfers
         try {
@@ -163,7 +168,7 @@ export default function AgentDetail() {
       const updatedPrompt = injectTransferInstructions(prompt, transfers);
       setPrompt(updatedPrompt);
 
-      const tools = await buildAgentTools(agent.clinic_id, agentId, transfers);
+      const tools = await buildAgentTools(agent.clinic_id, agentId, transfers, customFunctions);
 
       console.log('Actualizando en Retell AI...');
       await updateRetellAgent(agent.retell_agent_id, {
@@ -175,7 +180,7 @@ export default function AgentDetail() {
       });
 
       console.log('Actualizando en base de datos local...');
-      await updateAgent(agentId, { name, prompt: updatedPrompt, voice_id: voiceId, language, transfers, success_metrics: successMetrics });
+      await updateAgent(agentId, { name, prompt: updatedPrompt, voice_id: voiceId, language, transfers, success_metrics: successMetrics, custom_functions: customFunctions });
 
       console.log('Recargando agente...');
       await loadAgent();
@@ -210,7 +215,7 @@ export default function AgentDetail() {
 
   function updateTransfer(index: number, field: keyof Transfer, value: string) {
     const updated = [...transfers];
-    updated[index][field] = value;
+    (updated[index] as any)[field] = value;
     setTransfers(updated);
   }
 
@@ -231,6 +236,36 @@ export default function AgentDetail() {
     const updated = [...successMetrics];
     updated[index] = { ...updated[index], ...updates };
     setSuccessMetrics(updated);
+  }
+
+  function addCustomFunction() {
+    const newFunction: CustomFunction = {
+      id: `func_${Date.now()}`,
+      name: '',
+      display_name: '',
+      description: '',
+      webhook_url: '',
+      api_key: '',
+      enabled: true,
+    };
+    setCustomFunctions([...customFunctions, newFunction]);
+  }
+
+  function removeCustomFunction(index: number) {
+    setCustomFunctions(customFunctions.filter((_, i) => i !== index));
+  }
+
+  function updateCustomFunction(index: number, updates: Partial<CustomFunction>) {
+    const updated = [...customFunctions];
+    updated[index] = { ...updated[index], ...updates };
+    setCustomFunctions(updated);
+  }
+
+  function toggleApiKeyVisibility(functionId: string) {
+    setShowApiKeys(prev => ({
+      ...prev,
+      [functionId]: !prev[functionId]
+    }));
   }
 
   if (loading || !agent) {
@@ -523,6 +558,173 @@ export default function AgentDetail() {
                     <li><strong>Duración:</strong> Se considera exitosa si la llamada dura más del tiempo especificado</li>
                     <li><strong>Texto:</strong> Se considera exitosa si el campo custom_data contiene el valor esperado</li>
                     <li><strong>Analytics:</strong> Podrás ver la tasa de éxito basada en estas métricas en la página de Analytics</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Sección de Custom Functions */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-purple-600" />
+                      Conexiones con CRM o Calendario
+                    </h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Conecta tu agente con servicios externos mediante webhooks
+                    </p>
+                  </div>
+                  <button
+                    onClick={addCustomFunction}
+                    className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Nueva Conexión
+                  </button>
+                </div>
+
+                {customFunctions.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border-2 border-dashed border-purple-200">
+                    <Zap className="w-16 h-16 mx-auto mb-4 text-purple-300" />
+                    <p className="text-base font-medium">No hay conexiones configuradas</p>
+                    <p className="text-sm mt-2">Conecta tu agente con CRM, calendarios u otros servicios</p>
+                    <button
+                      onClick={addCustomFunction}
+                      className="mt-4 inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Crear Primera Conexión
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {customFunctions.map((func, index) => (
+                      <div key={func.id} className="border-2 border-purple-200 rounded-lg p-5 relative hover:border-purple-400 transition-all bg-gradient-to-br from-white to-purple-50">
+                        <button
+                          onClick={() => removeCustomFunction(index)}
+                          className="absolute top-3 right-3 text-red-600 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition-colors"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+
+                        <div className="space-y-4 pr-10">
+                          {/* Nombre y Estado */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                <MessageSquare className="w-3.5 h-3.5 text-purple-600" />
+                                Nombre para Mostrar
+                              </label>
+                              <input
+                                type="text"
+                                value={func.display_name}
+                                onChange={(e) => updateCustomFunction(index, { display_name: e.target.value })}
+                                placeholder="Agendar Cita en CRM"
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                                <Settings className="w-3.5 h-3.5 text-purple-600" />
+                                Nombre de la Función
+                              </label>
+                              <input
+                                type="text"
+                                value={func.name}
+                                onChange={(e) => updateCustomFunction(index, { name: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
+                                placeholder="agendar_cita"
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 font-mono"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Sin espacios, solo letras minúsculas y guiones bajos
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Descripción */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              📝 Descripción (qué hace y qué parámetros recibe)
+                            </label>
+                            <textarea
+                              value={func.description}
+                              onChange={(e) => updateCustomFunction(index, { description: e.target.value })}
+                              placeholder="Esta función agenda una cita en el CRM. Recibe: nombre_paciente (string), telefono (string), fecha_preferida (string)"
+                              rows={3}
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                            />
+                          </div>
+
+                          {/* URL del Webhook */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                              <Globe className="w-3.5 h-3.5 text-purple-600" />
+                              URL del Webhook
+                            </label>
+                            <input
+                              type="url"
+                              value={func.webhook_url}
+                              onChange={(e) => updateCustomFunction(index, { webhook_url: e.target.value })}
+                              placeholder="https://tu-crm.com/api/webhook"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 font-mono"
+                            />
+                          </div>
+
+                          {/* API Key / Contraseña */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+                              <Key className="w-3.5 h-3.5 text-purple-600" />
+                              Contraseña o API Key (opcional)
+                            </label>
+                            <div className="relative">
+                              <input
+                                type={showApiKeys[func.id] ? 'text' : 'password'}
+                                value={func.api_key}
+                                onChange={(e) => updateCustomFunction(index, { api_key: e.target.value })}
+                                placeholder="sk_tu_api_key_secreta"
+                                className="w-full px-3 py-2 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 font-mono"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => toggleApiKeyVisibility(func.id)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1"
+                              >
+                                {showApiKeys[func.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Se enviará en el header Authorization: Bearer [tu_api_key]
+                            </p>
+                          </div>
+
+                          {/* Estado Activo/Inactivo */}
+                          <div className="flex items-center gap-2 pt-2 border-t border-purple-100">
+                            <input
+                              type="checkbox"
+                              id={`enabled-${func.id}`}
+                              checked={func.enabled}
+                              onChange={(e) => updateCustomFunction(index, { enabled: e.target.checked })}
+                              className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                            />
+                            <label htmlFor={`enabled-${func.id}`} className="text-sm font-medium text-gray-700 cursor-pointer">
+                              {func.enabled ? '✅ Activa' : '❌ Desactivada'}
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-4 text-xs text-purple-900">
+                  <p className="font-medium mb-2">💡 Cómo funciona:</p>
+                  <ul className="list-disc list-inside space-y-1.5 text-purple-800">
+                    <li><strong>Súper fácil:</strong> Solo necesitas poner el nombre, la URL de tu webhook y listo</li>
+                    <li><strong>Automático:</strong> El agente ejecutará esta función cuando sea necesario durante la llamada</li>
+                    <li><strong>Datos enviados:</strong> Tu webhook recibirá los parámetros que describas en formato JSON</li>
+                    <li><strong>Seguro:</strong> La API Key se envía en cada petición para autenticarte</li>
+                    <li><strong>Prompt automático:</strong> Se añade automáticamente al prompt del agente - ¡no necesitas editarlo!</li>
                   </ul>
                 </div>
               </div>

@@ -32,6 +32,16 @@ export interface SuccessMetric {
   expected_value?: string; // Para métricas de texto
 }
 
+export interface CustomFunction {
+  id: string;
+  name: string; // Nombre de la función que el agente ejecutará (ej: "agendar_cita")
+  display_name: string; // Nombre para mostrar (ej: "Agendar Cita en CRM")
+  description: string; // Descripción de qué hace y qué parámetros espera
+  webhook_url: string; // URL del webhook a llamar
+  api_key?: string; // API key o contraseña para autenticación
+  enabled: boolean;
+}
+
 export interface Agent {
   id: string;
   clinic_id: string;
@@ -50,6 +60,7 @@ export interface Agent {
     agent_id?: string;
   }>;
   success_metrics?: SuccessMetric[];
+  custom_functions?: CustomFunction[];
   created_at: string;
   updated_at: string;
 }

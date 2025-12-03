@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { CustomFunction } from '../types';
 
 interface CalcomTool {
   type: 'end_call' | 'check_availability_cal' | 'book_cal';
@@ -22,6 +23,20 @@ interface TransferTool {
   agent_id?: string;
 }
 
+interface CustomFunctionTool {
+  type: 'custom';
+  name: string;
+  description: string;
+  speak_on_send?: boolean;
+  speak_during_execution?: boolean;
+  url: string;
+  parameters?: {
+    type: 'object';
+    properties: Record<string, any>;
+    required?: string[];
+  };
+}
+
 export async function buildAgentTools(
   clinicId: string,
   agentId?: string,
@@ -31,9 +46,10 @@ export async function buildAgentTools(
     description: string;
     type: 'phone' | 'agent';
     agent_id?: string;
-  }>
-): Promise<Array<TransferTool | CalcomTool>> {
-  const tools: Array<TransferTool | CalcomTool> = [];
+  }>,
+  customFunctions?: CustomFunction[]
+): Promise<Array<TransferTool | CalcomTool | CustomFunctionTool>> {
+  const tools: Array<TransferTool | CalcomTool | CustomFunctionTool> = [];
 
   if (transfers && transfers.length > 0) {
     for (const transfer of transfers) {
@@ -149,6 +165,43 @@ export async function buildAgentTools(
             },
           },
           required: ['eventTypeId', 'start', 'name', 'email', 'apiKey'],
+        },
+      });
+    }
+  }
+
+  // Add custom functions as tools
+  if (customFunctions && customFunctions.length > 0) {
+    const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+
+    for (const customFunc of customFunctions) {
+      if (!customFunc.enabled) continue;
+      if (!customFunc.name || !customFunc.webhook_url) continue;
+
+      tools.push({
+        type: 'custom',
+        name: customFunc.name,
+        description: customFunc.description || `Ejecuta ${customFunc.display_name}`,
+        speak_on_send: false,
+        speak_during_execution: true,
+        url: `${functionUrl}/custom-function-proxy`,
+        parameters: {
+          type: 'object',
+          properties: {
+            webhook_url: {
+              type: 'string',
+              description: `URL del webhook (usar: ${customFunc.webhook_url})`,
+            },
+            api_key: {
+              type: 'string',
+              description: customFunc.api_key ? `API Key (usar: ${customFunc.api_key})` : 'API Key opcional',
+            },
+            payload: {
+              type: 'object',
+              description: 'Datos a enviar según la descripción de la función',
+            },
+          },
+          required: ['webhook_url', 'payload'],
         },
       });
     }
