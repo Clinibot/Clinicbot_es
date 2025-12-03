@@ -17,16 +17,16 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [selectedCall, setSelectedCall] = useState<CallRecord | null>(null);
-  const [filter, setFilter] = useState<'all' | 'completed' | 'missed'>('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('week');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>('all');
+  const [sentimentFilter, setSentimentFilter] = useState<string>('all');
 
   useEffect(() => {
     loadData();
-  }, [clinicId, dateFilter, customStartDate, customEndDate, selectedAgentId]);
+  }, [clinicId, dateFilter, customStartDate, customEndDate, selectedAgentId, sentimentFilter]);
 
   function getDateRange(): { start: Date | null; end: Date | null } {
     const now = new Date();
@@ -142,9 +142,11 @@ export default function Analytics() {
   }
 
   const filteredCalls = calls.filter(call => {
-    if (filter === 'all') return true;
-    if (filter === 'completed') return call.call_status === 'completed';
-    if (filter === 'missed') return call.call_status === 'missed' || call.call_status === 'no-answer';
+    // Filtrar por sentimiento
+    if (sentimentFilter !== 'all') {
+      const callSentiment = call.metadata?.sentiment?.toLowerCase() || 'unknown';
+      if (callSentiment !== sentimentFilter) return false;
+    }
     return true;
   });
 
@@ -332,56 +334,80 @@ export default function Analytics() {
 
         <div className="bg-white rounded-lg shadow">
           <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Historial de Llamadas</h2>
-              <div className="flex items-center gap-3">
-                {/* Selector de Agente */}
-                <select
-                  value={selectedAgentId}
-                  onChange={(e) => setSelectedAgentId(e.target.value)}
-                  className="px-3 py-1.5 border-2 border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                >
-                  <option value="all">Todos los agentes</option>
-                  {agents.map((agent) => (
-                    <option key={agent.id} value={agent.id}>
-                      {agent.name}
-                    </option>
-                  ))}
-                </select>
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Historial de Llamadas</h2>
 
-                {/* Filtros de Estado */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setFilter('all')}
-                    className={`px-3 py-1 rounded-lg text-sm ${
-                      filter === 'all'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    Todas
-                  </button>
-                  <button
-                    onClick={() => setFilter('completed')}
-                    className={`px-3 py-1 rounded-lg text-sm ${
-                      filter === 'completed'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    Completadas
-                  </button>
-                  <button
-                    onClick={() => setFilter('missed')}
-                    className={`px-3 py-1 rounded-lg text-sm ${
-                      filter === 'missed'
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+              {/* Botones de Agente */}
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <span className="text-sm font-medium text-gray-700 mr-2">Agente:</span>
+                <button
+                  onClick={() => setSelectedAgentId('all')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedAgentId === 'all'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
-                  Perdidas
+                  Todos
                 </button>
-                </div>
+                {agents.map((agent) => (
+                  <button
+                    key={agent.id}
+                    onClick={() => setSelectedAgentId(agent.id)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      selectedAgentId === agent.id
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {agent.name}
+                  </button>
+                ))}
+              </div>
+
+              {/* Filtros de Sentimiento */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-gray-700 mr-2">Sentimiento:</span>
+                <button
+                  onClick={() => setSentimentFilter('all')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    sentimentFilter === 'all'
+                      ? 'bg-purple-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Todos
+                </button>
+                <button
+                  onClick={() => setSentimentFilter('positive')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    sentimentFilter === 'positive'
+                      ? 'bg-green-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Positivo
+                </button>
+                <button
+                  onClick={() => setSentimentFilter('neutral')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    sentimentFilter === 'neutral'
+                      ? 'bg-gray-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Neutral
+                </button>
+                <button
+                  onClick={() => setSentimentFilter('negative')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    sentimentFilter === 'negative'
+                      ? 'bg-red-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Negativo
+                </button>
               </div>
             </div>
           </div>
