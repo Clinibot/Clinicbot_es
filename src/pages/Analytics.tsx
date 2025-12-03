@@ -22,11 +22,10 @@ export default function Analytics() {
   const [customEndDate, setCustomEndDate] = useState('');
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>('all');
-  const [sentimentFilter, setSentimentFilter] = useState<string>('all');
 
   useEffect(() => {
     loadData();
-  }, [clinicId, dateFilter, customStartDate, customEndDate, selectedAgentId, sentimentFilter]);
+  }, [clinicId, dateFilter, customStartDate, customEndDate, selectedAgentId]);
 
   function getDateRange(): { start: Date | null; end: Date | null } {
     const now = new Date();
@@ -136,14 +135,7 @@ export default function Analytics() {
     }).format(amount);
   }
 
-  const filteredCalls = calls.filter(call => {
-    // Filtrar por sentimiento
-    if (sentimentFilter !== 'all') {
-      const callSentiment = call.metadata?.sentiment?.toLowerCase() || 'unknown';
-      if (callSentiment !== sentimentFilter) return false;
-    }
-    return true;
-  });
+  const filteredCalls = calls;
 
   if (loading) {
     return (
@@ -333,7 +325,7 @@ export default function Analytics() {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Historial de Llamadas</h2>
 
               {/* Botones de Agente */}
-              <div className="flex flex-wrap items-center gap-2 mb-4">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium text-gray-700 mr-2">Agente:</span>
                 <button
                   onClick={() => setSelectedAgentId('all')}
@@ -359,51 +351,6 @@ export default function Analytics() {
                   </button>
                 ))}
               </div>
-
-              {/* Filtros de Sentimiento */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-gray-700 mr-2">Sentimiento:</span>
-                <button
-                  onClick={() => setSentimentFilter('all')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    sentimentFilter === 'all'
-                      ? 'bg-purple-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Todos
-                </button>
-                <button
-                  onClick={() => setSentimentFilter('positive')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    sentimentFilter === 'positive'
-                      ? 'bg-green-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Positivo
-                </button>
-                <button
-                  onClick={() => setSentimentFilter('neutral')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    sentimentFilter === 'neutral'
-                      ? 'bg-gray-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Neutral
-                </button>
-                <button
-                  onClick={() => setSentimentFilter('negative')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    sentimentFilter === 'negative'
-                      ? 'bg-red-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Negativo
-                </button>
-              </div>
             </div>
           </div>
 
@@ -424,7 +371,7 @@ export default function Analytics() {
                     Duración
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
+                    Sentimiento
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Coste
@@ -448,10 +395,18 @@ export default function Analytics() {
                         <div className="flex items-center">
                           <User className="w-5 h-5 text-gray-400 mr-2" />
                           <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {call.caller_name || 'Desconocido'}
-                            </div>
-                            <div className="text-sm text-gray-500">{call.caller_phone}</div>
+                            {call.call_type === 'web_call' ? (
+                              <div className="text-sm font-medium text-blue-600">Llamada de prueba</div>
+                            ) : (
+                              <>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {call.caller_phone || 'Desconocido'}
+                                </div>
+                                {call.caller_name && (
+                                  <div className="text-xs text-gray-500">{call.caller_name}</div>
+                                )}
+                              </>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -465,15 +420,25 @@ export default function Analytics() {
                         {formatDuration(call.duration_seconds)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            call.call_status === 'completed'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {call.call_status === 'completed' ? 'Completada' : 'No completada'}
-                        </span>
+                        {call.metadata?.sentiment ? (
+                          <span
+                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              call.metadata.sentiment.toLowerCase() === 'positive'
+                                ? 'bg-green-100 text-green-800'
+                                : call.metadata.sentiment.toLowerCase() === 'negative'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {call.metadata.sentiment.toLowerCase() === 'positive'
+                              ? 'Positivo'
+                              : call.metadata.sentiment.toLowerCase() === 'negative'
+                              ? 'Negativo'
+                              : 'Neutral'}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {formatCurrency(call.user_cost)}
