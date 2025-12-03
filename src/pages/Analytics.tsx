@@ -468,7 +468,7 @@ export default function Analytics() {
                                 <p className="text-sm font-semibold text-gray-900">{formatDuration(call.duration_seconds)}</p>
                               </div>
                               <div>
-                                <p className="text-xs text-gray-500 font-medium mb-1">Coste (con 20% incremento)</p>
+                                <p className="text-xs text-gray-500 font-medium mb-1">Coste (+20%)</p>
                                 <p className="text-sm font-semibold text-green-700">{formatCurrency(call.user_cost)}</p>
                               </div>
                               <div>

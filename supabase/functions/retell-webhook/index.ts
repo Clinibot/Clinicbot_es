@@ -90,42 +90,51 @@ Deno.serve(async (req: Request) => {
       ? Math.floor((call.end_timestamp - call.start_timestamp) / 1000)
       : 0;
 
-    // Obtener el costo real de Retell AI o calcular basado en duración
+    // Calcular el costo con markup del 20%
+    // combined_cost viene en centavos de USD desde Retell AI
+    let userCost = 0;
     let externalCost = 0;
 
-    console.log('🔍 DEBUG - Call Cost Data:', {
-      combined_cost: call.call_cost?.combined_cost,
-      product_costs: call.call_cost?.product_costs,
-      call_id: call.call_id
-    });
-
-    console.log('🔍 DEBUG - Call Analysis:', {
-      user_sentiment: call.call_analysis?.user_sentiment,
-      call_summary: call.call_analysis?.call_summary?.substring(0, 50),
-      call_id: call.call_id
-    });
-
     if (call.call_cost?.combined_cost !== undefined) {
-      // Usar el costo real de la API (viene en centavos de USD)
-      externalCost = call.call_cost.combined_cost / 100;
+      // Fórmula simple: (centavos / 100) * 1.20
+      externalCost = call.call_cost.combined_cost / 100; // Convertir centavos a dólares
+      userCost = externalCost * 1.20; // Aplicar 20% de markup
+
+      console.log('💰 Cost Calculation:', {
+        combined_cost_cents: call.call_cost.combined_cost,
+        external_cost_usd: externalCost,
+        user_cost_with_markup: userCost,
+        markup: '20%',
+        call_id: call.call_id
+      });
     } else if (call.call_cost?.product_costs && call.call_cost.product_costs.length > 0) {
-      // Sumar los costos de productos individuales (en centavos de USD)
-      externalCost = call.call_cost.product_costs.reduce((sum, pc) => sum + pc.cost, 0) / 100;
+      // Sumar costos de productos (también en centavos)
+      const totalCents = call.call_cost.product_costs.reduce((sum, pc) => sum + pc.cost, 0);
+      externalCost = totalCents / 100;
+      userCost = externalCost * 1.20;
+
+      console.log('💰 Cost from Products:', {
+        total_cents: totalCents,
+        external_cost_usd: externalCost,
+        user_cost_with_markup: userCost,
+        call_id: call.call_id
+      });
     } else {
-      // Fallback: estimar basado en duración (aprox $0.10/min = $0.00167/seg)
+      // Fallback: estimar basado en duración
       externalCost = (durationSeconds / 60) * 0.10;
+      userCost = externalCost * 1.20;
+
+      console.log('⚠️ Cost Fallback (no cost data):', {
+        duration_seconds: durationSeconds,
+        estimated_external: externalCost,
+        estimated_user: userCost,
+        call_id: call.call_id
+      });
     }
 
-    // Convertir de USD a EUR (aproximadamente 1 USD = 0.92 EUR)
-    externalCost = externalCost * 0.92;
-
-    // Aplicar markup del 20%
-    const userCost = externalCost * 1.2;
-
-    console.log('💰 DEBUG - Final Costs:', {
-      externalCost,
-      userCost,
-      markup: '20%',
+    console.log('🔍 Call Analysis:', {
+      user_sentiment: call.call_analysis?.user_sentiment,
+      call_summary_length: call.call_analysis?.call_summary?.length || 0,
       call_id: call.call_id
     });
 
