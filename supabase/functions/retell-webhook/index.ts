@@ -93,6 +93,18 @@ Deno.serve(async (req: Request) => {
     // Obtener el costo real de Retell AI o calcular basado en duración
     let externalCost = 0;
 
+    console.log('🔍 DEBUG - Call Cost Data:', {
+      combined_cost: call.call_cost?.combined_cost,
+      product_costs: call.call_cost?.product_costs,
+      call_id: call.call_id
+    });
+
+    console.log('🔍 DEBUG - Call Analysis:', {
+      user_sentiment: call.call_analysis?.user_sentiment,
+      call_summary: call.call_analysis?.call_summary?.substring(0, 50),
+      call_id: call.call_id
+    });
+
     if (call.call_cost?.combined_cost !== undefined) {
       // Usar el costo real de la API (viene en centavos de USD)
       externalCost = call.call_cost.combined_cost / 100;
@@ -109,6 +121,13 @@ Deno.serve(async (req: Request) => {
 
     // Aplicar markup del 20%
     const userCost = externalCost * 1.2;
+
+    console.log('💰 DEBUG - Final Costs:', {
+      externalCost,
+      userCost,
+      markup: '20%',
+      call_id: call.call_id
+    });
 
     const callRecord = {
       clinic_id: agent.clinic_id,
