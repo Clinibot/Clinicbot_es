@@ -135,6 +135,17 @@ Deno.serve(async (req: Request) => {
     console.log('🔍 Call Analysis:', {
       user_sentiment: call.call_analysis?.user_sentiment,
       call_summary_length: call.call_analysis?.call_summary?.length || 0,
+      call_successful: call.call_analysis?.call_successful,
+      full_call_analysis: JSON.stringify(call.call_analysis || {}),
+      call_id: call.call_id
+    });
+
+    // Determine sentiment with fallback to 'Neutral' if not provided
+    const sentiment = call.call_analysis?.user_sentiment || 'Neutral';
+
+    console.log('💭 Sentiment Processing:', {
+      raw_sentiment: call.call_analysis?.user_sentiment,
+      final_sentiment: sentiment,
       call_id: call.call_id
     });
 
@@ -156,7 +167,7 @@ Deno.serve(async (req: Request) => {
       started_at: new Date(call.start_timestamp).toISOString(),
       ended_at: call.end_timestamp ? new Date(call.end_timestamp).toISOString() : null,
       metadata: {
-        sentiment: call.call_analysis?.user_sentiment,
+        sentiment: sentiment,
         successful: call.call_analysis?.call_successful,
         in_voicemail: call.call_analysis?.in_voicemail,
         disconnection_reason: call.disconnection_reason,
