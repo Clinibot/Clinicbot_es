@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Phone, Volume2, Loader } from 'lucide-react';
 import { createAgent, VOICES, LANGUAGES } from '../services/agentService';
-import { createRetellAgent, testRetellConnection } from '../services/retellService';
+import { createRetellAgent } from '../services/retellService';
 import { getClinic } from '../services/clinicService';
 import { buildAgentTools } from '../services/agentToolsService';
 
@@ -181,17 +181,6 @@ Si dice que no responde: "Perfecto, gracias por tu tiempo. ¡Cuídate!"
     }
   }
 
-  async function handleTestConnection() {
-    setError('');
-    try {
-      await testRetellConnection();
-      alert('Revisa la consola del navegador para ver los resultados');
-    } catch (err) {
-      console.error('Error testing connection:', err);
-      setError('Error al probar conexión');
-    }
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!clinicId || !agentName) return;
@@ -360,29 +349,20 @@ Si dice que no responde: "Perfecto, gracias por tu tiempo. ¡Cuídate!"
             </div>
           )}
 
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleTestConnection}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
-            >
-              Probar Conexión
-            </button>
-            <button
-              type="submit"
-              disabled={submitting || !agentName}
-              className="flex-1 bg-blue-600 text-white py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {submitting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader className="w-5 h-5 animate-spin" />
-                  Creando agente...
-                </span>
-              ) : (
-                'Crear Agente'
-              )}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={submitting || !agentName}
+            className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {submitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader className="w-5 h-5 animate-spin" />
+                Creando agente...
+              </span>
+            ) : (
+              'Crear Agente'
+            )}
+          </button>
         </form>
       </div>
     </div>
