@@ -121,6 +121,13 @@ export default function ClinicDetail() {
                 <Phone className="w-4 h-4" />
                 Gestionar Teléfonos
               </button>
+              <button
+                onClick={() => navigate(`/clinic/${clinicId}/calls`)}
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                <Phone className="w-4 h-4" />
+                Hacer Llamadas
+              </button>
             </div>
           </div>
 
