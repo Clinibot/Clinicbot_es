@@ -12,6 +12,8 @@ interface Transfer {
   name: string;
   phone: string;
   description: string;
+  type: 'phone' | 'agent';
+  agent_id?: string; // For agent-to-agent transfers
 }
 
 interface CalcomEventType {
@@ -20,6 +22,7 @@ interface CalcomEventType {
   duration_minutes: number;
   description: string | null;
   enabled: boolean;
+  external_event_id: number;
 }
 
 export default function AgentDetail() {
@@ -37,6 +40,9 @@ export default function AgentDetail() {
   const [language, setLanguage] = useState('');
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [calcomEvents, setCalcomEvents] = useState<CalcomEventType[]>([]);
+  const [calcomUsername, setCalcomUsername] = useState<string>('');
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const [availableAgents, setAvailableAgents] = useState<Agent[]>([]);
 
   useEffect(() => {
     loadAgent();
@@ -52,18 +58,50 @@ export default function AgentDetail() {
         setPrompt(data.prompt);
         setVoiceId(data.voice_id || VOICES[0].id);
         setLanguage(data.language || LANGUAGES[0].id);
-        setTransfers(data.transfers || []);
+
+        // Migrate old transfers to include type field
+        const migratedTransfers = (data.transfers || []).map(t => ({
+          ...t,
+          type: t.type || 'phone' as 'phone' | 'agent'
+        }));
+        setTransfers(migratedTransfers);
+
+        // Load other agents from the same clinic for agent-to-agent transfers
+        try {
+          const { data: agents } = await supabase
+            .from('agents')
+            .select('*')
+            .eq('clinic_id', data.clinic_id)
+            .neq('id', agentId)
+            .eq('enabled', true);
+
+          setAvailableAgents(agents || []);
+        } catch (err) {
+          console.error('Error loading available agents:', err);
+        }
 
         // Cargar eventos de Cal.com asignados a este agente
         try {
           const { data: events } = await supabase
             .from('calcom_event_types')
-            .select('id, event_name, duration_minutes, description, enabled')
+            .select('id, event_name, duration_minutes, description, enabled, external_event_id')
             .eq('clinic_id', data.clinic_id)
             .eq('enabled', true)
             .or(`agent_id.is.null,agent_id.eq.${agentId}`);
 
           setCalcomEvents(events || []);
+
+          // Cargar config de Cal.com si existe
+          const { data: config } = await supabase
+            .from('calcom_config')
+            .select('*')
+            .eq('clinic_id', data.clinic_id)
+            .maybeSingle();
+
+          // Intentar extraer username de API key o configuración
+          if (config) {
+            setCalcomUsername('cal.com'); // Placeholder
+          }
         } catch (err) {
           console.error('Error loading Cal.com events:', err);
         }
@@ -79,6 +117,34 @@ export default function AgentDetail() {
     }
   }
 
+  function generateTransferInstructions(transfers: Transfer[]): string {
+    if (transfers.length === 0) return '';
+
+    const instructions = transfers.map(transfer => {
+      const action = transfer.type === 'agent'
+        ? `ejecuta la función ${transfer.name} para transferir la llamada a otro agente especializado`
+        : `ejecuta la función ${transfer.name} para transferir la llamada`;
+
+      return `- Si el usuario solicita ${transfer.description.toLowerCase()}, entonces ${action}`;
+    });
+
+    return `\n\n# Transferencias\n\nCuando sea necesario transferir la llamada, sigue estas instrucciones:\n\n${instructions.join('\n')}`;
+  }
+
+  function injectTransferInstructions(basePrompt: string, transfers: Transfer[]): string {
+    // Remove existing #transferencias section if it exists
+    const transferSectionRegex = /\n*#\s*[Tt]ransferencias[\s\S]*?(?=\n#|$)/g;
+    let cleanedPrompt = basePrompt.replace(transferSectionRegex, '');
+
+    // Add new transfer instructions if there are any transfers
+    if (transfers.length > 0) {
+      const transferInstructions = generateTransferInstructions(transfers);
+      cleanedPrompt = cleanedPrompt.trim() + transferInstructions;
+    }
+
+    return cleanedPrompt;
+  }
+
   async function handleSave() {
     if (!agent || !agentId) return;
     setSaving(true);
@@ -89,24 +155,28 @@ export default function AgentDetail() {
       console.log('Voice ID seleccionado:', voiceId);
       console.log('Nombre de voz:', VOICES.find(v => v.id === voiceId)?.name);
 
+      // Auto-inject transfer instructions into prompt
+      const updatedPrompt = injectTransferInstructions(prompt, transfers);
+      setPrompt(updatedPrompt);
+
       const tools = await buildAgentTools(agent.clinic_id, agentId, transfers);
 
       console.log('Actualizando en Retell AI...');
       await updateRetellAgent(agent.retell_agent_id, {
         name,
-        prompt,
+        prompt: updatedPrompt,
         voiceId,
         language,
         tools
       });
 
       console.log('Actualizando en base de datos local...');
-      await updateAgent(agentId, { name, prompt, voice_id: voiceId, language, transfers });
+      await updateAgent(agentId, { name, prompt: updatedPrompt, voice_id: voiceId, language, transfers });
 
       console.log('Recargando agente...');
       await loadAgent();
       setShowPromptEditor(false);
-      alert('✅ Agente actualizado correctamente\n\nRevisa la consola del navegador para ver los detalles de la actualización.');
+      alert('✅ Agente actualizado correctamente\n\nLas instrucciones de transferencia se han añadido automáticamente al prompt.');
     } catch (err) {
       console.error('Error detallado:', err);
       alert('Error al guardar: ' + (err instanceof Error ? err.message : 'Error desconocido'));
@@ -127,7 +197,7 @@ export default function AgentDetail() {
   }
 
   function addTransfer() {
-    setTransfers([...transfers, { name: '', phone: '', description: '' }]);
+    setTransfers([...transfers, { name: '', phone: '', description: '', type: 'phone' }]);
   }
 
   function removeTransfer(index: number) {
@@ -341,23 +411,65 @@ export default function AgentDetail() {
                     <Calendar className="w-5 h-5 text-green-600" />
                     <h3 className="font-semibold text-gray-900">Cal.com Tools Activas</h3>
                   </div>
-                  <div className="space-y-3">
-                    {calcomEvents.map((event) => (
-                      <div key={event.id} className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
+                  <div className="space-y-2">
+                    {calcomEvents.map((event) => {
+                      const isExpanded = expandedEventId === event.id;
+                      const bookingUrl = `https://cal.com/${event.external_event_id}`;
+
+                      return (
+                        <div key={event.id} className="border border-green-200 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => setExpandedEventId(isExpanded ? null : event.id)}
+                            className="w-full p-3 bg-green-50 hover:bg-green-100 transition-colors flex items-center justify-between"
+                          >
                             <div className="flex items-center gap-2">
                               <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                              <p className="font-medium text-gray-900 text-sm">{event.event_name}</p>
+                              <span className="font-medium text-gray-900 text-sm">{event.event_name}</span>
+                              <span className="text-xs text-gray-600">({event.duration_minutes} min)</span>
                             </div>
-                            <p className="text-xs text-gray-600 mt-1 ml-6">{event.duration_minutes} minutos</p>
-                            {event.description && (
-                              <p className="text-xs text-gray-500 mt-1 ml-6">{event.description}</p>
+                            {isExpanded ? (
+                              <ChevronUp className="w-4 h-4 text-gray-600" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-gray-600" />
                             )}
-                          </div>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="p-3 bg-white border-t border-green-200 space-y-2">
+                              <div className="text-xs space-y-1.5">
+                                <div className="flex items-start gap-2">
+                                  <span className="text-gray-500 font-medium min-w-[70px]">Duración:</span>
+                                  <span className="text-gray-900">{event.duration_minutes} minutos</span>
+                                </div>
+
+                                {event.description && (
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-gray-500 font-medium min-w-[70px]">Descripción:</span>
+                                    <span className="text-gray-900">{event.description}</span>
+                                  </div>
+                                )}
+
+                                <div className="flex items-start gap-2">
+                                  <span className="text-gray-500 font-medium min-w-[70px]">Event ID:</span>
+                                  <span className="text-gray-900 font-mono text-[10px]">{event.external_event_id}</span>
+                                </div>
+
+                                <div className="pt-2 mt-2 border-t border-gray-100">
+                                  <a
+                                    href={bookingUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium"
+                                  >
+                                    Ver en Cal.com →
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       <p className="text-xs text-blue-900 font-medium mb-1">✓ Tools disponibles:</p>
                       <ul className="text-xs text-blue-800 space-y-1 ml-3">
@@ -449,44 +561,88 @@ export default function AgentDetail() {
                       <X className="w-5 h-5" />
                     </button>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pr-12">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Nombre / Departamento
-                        </label>
-                        <input
-                          type="text"
-                          value={transfer.name}
-                          onChange={(e) => updateTransfer(index, 'name', e.target.value)}
-                          placeholder="Dr. García / Recepción"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        />
+                    <div className="space-y-4 pr-12">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Tipo de Transferencia
+                          </label>
+                          <select
+                            value={transfer.type}
+                            onChange={(e) => updateTransfer(index, 'type', e.target.value as 'phone' | 'agent')}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                          >
+                            <option value="phone">📞 Transferencia a Teléfono</option>
+                            <option value="agent">🤖 Transferencia a Agente IA</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre / Identificador
+                          </label>
+                          <input
+                            type="text"
+                            value={transfer.name}
+                            onChange={(e) => updateTransfer(index, 'name', e.target.value)}
+                            placeholder="Dr. García / Urgencias"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                          />
+                        </div>
                       </div>
+
+                      {transfer.type === 'phone' ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Número de Teléfono
+                          </label>
+                          <input
+                            type="tel"
+                            value={transfer.phone}
+                            onChange={(e) => updateTransfer(index, 'phone', e.target.value)}
+                            placeholder="+34 600 123 456"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Seleccionar Agente
+                          </label>
+                          <select
+                            value={transfer.agent_id || ''}
+                            onChange={(e) => updateTransfer(index, 'agent_id', e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+                          >
+                            <option value="">Selecciona un agente...</option>
+                            {availableAgents.map((ag) => (
+                              <option key={ag.id} value={ag.id}>
+                                {ag.name} ({ag.agent_type === 'inbound' ? 'Entrante' : 'Saliente'})
+                              </option>
+                            ))}
+                          </select>
+                          {availableAgents.length === 0 && (
+                            <p className="text-xs text-amber-600 mt-1">
+                              No hay otros agentes disponibles. Crea más agentes para habilitar transferencias entre agentes.
+                            </p>
+                          )}
+                        </div>
+                      )}
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Número de Teléfono
-                        </label>
-                        <input
-                          type="tel"
-                          value={transfer.phone}
-                          onChange={(e) => updateTransfer(index, 'phone', e.target.value)}
-                          placeholder="+34 600 123 456"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Descripción
+                          Descripción / Cuándo transferir
                         </label>
                         <input
                           type="text"
                           value={transfer.description}
                           onChange={(e) => updateTransfer(index, 'description', e.target.value)}
-                          placeholder="Para emergencias médicas"
+                          placeholder="Para emergencias médicas urgentes"
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Describe cuándo el agente debe realizar esta transferencia
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -497,12 +653,18 @@ export default function AgentDetail() {
             <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900">
               <p className="font-medium mb-2">💡 Cómo funcionan las transferencias:</p>
               <ul className="list-disc list-inside space-y-1 text-blue-800">
-                <li><strong>Sistema automático:</strong> Cuando guardas, las transferencias se configuran automáticamente como herramientas del agente</li>
+                <li><strong>Sistema automático:</strong> Cuando guardas, las transferencias se configuran automáticamente como herramientas del agente y se añaden al prompt</li>
+                <li><strong>Dos tipos de transferencias:</strong>
+                  <ul className="ml-6 mt-1 space-y-1">
+                    <li>📞 <strong>A Teléfono:</strong> Transfiere la llamada a un número de teléfono específico</li>
+                    <li>🤖 <strong>A Agente IA:</strong> Transfiere la conversación a otro agente IA especializado de tu clínica</li>
+                  </ul>
+                </li>
                 <li><strong>La descripción es clave:</strong> El agente usa la descripción para detectar cuándo debe transferir la llamada</li>
                 <li><strong>Ejemplo:</strong> Si pones "Para emergencias médicas urgentes", el agente transferirá automáticamente cuando detecte una emergencia</li>
-                <li><strong>Nombre claro:</strong> El agente usará el nombre que pongas para ejecutar la transferencia (ej: "Dr. García", "Urgencias")</li>
-                <li><strong>Formato del número:</strong> Incluye siempre el código de país completo (ej: +34 600 123 456)</li>
-                <li>No necesitas modificar el prompt manualmente - todo se configura automáticamente</li>
+                <li><strong>Nombre claro:</strong> El agente usará el nombre que pongas para ejecutar la transferencia (ej: "Dr. García", "Urgencias", "Especialista en Pediatría")</li>
+                <li><strong>Formato del número:</strong> Para transferencias telefónicas, incluye siempre el código de país completo (ej: +34 600 123 456)</li>
+                <li><strong>Prompt automático:</strong> Se añade automáticamente una sección "#transferencias" al prompt con las instrucciones - ¡no necesitas editarlo manualmente!</li>
               </ul>
             </div>
           </div>

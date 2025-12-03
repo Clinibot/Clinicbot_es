@@ -18,25 +18,51 @@ interface TransferTool {
   type: 'transfer_call';
   name: string;
   description: string;
-  number: string;
+  number?: string;
+  agent_id?: string;
 }
 
 export async function buildAgentTools(
   clinicId: string,
   agentId?: string,
-  transfers?: Array<{ name: string; phone: string; description: string }>
+  transfers?: Array<{
+    name: string;
+    phone: string;
+    description: string;
+    type: 'phone' | 'agent';
+    agent_id?: string;
+  }>
 ): Promise<Array<TransferTool | CalcomTool>> {
   const tools: Array<TransferTool | CalcomTool> = [];
 
   if (transfers && transfers.length > 0) {
-    transfers.forEach(transfer => {
-      tools.push({
-        type: 'transfer_call',
-        name: transfer.name,
-        description: transfer.description,
-        number: transfer.phone,
-      });
-    });
+    for (const transfer of transfers) {
+      if (transfer.type === 'agent' && transfer.agent_id) {
+        // Agent-to-agent transfer
+        const { data: targetAgent } = await supabase
+          .from('agents')
+          .select('retell_agent_id')
+          .eq('id', transfer.agent_id)
+          .maybeSingle();
+
+        if (targetAgent && targetAgent.retell_agent_id) {
+          tools.push({
+            type: 'transfer_call',
+            name: transfer.name,
+            description: transfer.description,
+            agent_id: targetAgent.retell_agent_id,
+          });
+        }
+      } else if (transfer.type === 'phone' && transfer.phone) {
+        // Phone transfer
+        tools.push({
+          type: 'transfer_call',
+          name: transfer.name,
+          description: transfer.description,
+          number: transfer.phone,
+        });
+      }
+    }
   }
 
   const { data: config } = await supabase
