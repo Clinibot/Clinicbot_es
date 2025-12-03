@@ -280,12 +280,13 @@ export default function Analytics() {
     ].filter(item => item.value > 0);
   }
 
-  // Preparar datos para gráfico de estados
-  function prepareStatusData() {
-    return [
-      { name: 'Completadas', value: analytics?.completedCalls || 0, color: COLORS.completed },
-      { name: 'Perdidas', value: analytics?.missedCalls || 0, color: COLORS.missed },
-    ].filter(item => item.value > 0);
+  // Preparar datos para gráfico de duración media
+  function prepareDurationData() {
+    return timeSeriesData.map(item => ({
+      date: item.date,
+      avgDuration: item.calls > 0 ? Math.round(item.duration / item.calls) : 0,
+      avgDurationMin: item.calls > 0 ? parseFloat((item.duration / item.calls / 60).toFixed(1)) : 0,
+    }));
   }
 
   // Preparar datos para comparación entre agentes
@@ -314,7 +315,7 @@ export default function Analytics() {
   const filteredCalls = calls;
   const timeSeriesData = prepareTimeSeriesData();
   const sentimentData = prepareSentimentData();
-  const statusData = prepareStatusData();
+  const durationData = prepareDurationData();
   const agentComparisonData = prepareAgentComparisonData();
 
   if (loading) {
@@ -628,30 +629,25 @@ export default function Analytics() {
             </ResponsiveContainer>
           </div>
 
-          {/* Gráfico de Estados */}
+          {/* Gráfico de Duración Media */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <BarChart3 className="w-5 h-5 text-orange-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Estado de Llamadas</h3>
+              <Clock className="w-5 h-5 text-orange-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Duración Media de Llamadas</h3>
             </div>
             <ResponsiveContainer width="100%" height={300}>
-              <RechartsPie>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={(entry) => `${entry.name}: ${entry.value}`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </RechartsPie>
+              <BarChart data={durationData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#6b7280" />
+                <YAxis tick={{ fontSize: 12 }} stroke="#6b7280" label={{ value: 'Minutos', angle: -90, position: 'insideLeft', style: { fontSize: 12 } }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                  labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
+                  formatter={(value: number) => [`${value} min`, 'Duración Media']}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar dataKey="avgDurationMin" fill="#f97316" name="Duración Media (min)" radius={[8, 8, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
