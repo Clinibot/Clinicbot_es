@@ -37,6 +37,8 @@ export interface Agent {
     name: string;
     phone: string;
     description: string;
+    type: 'phone' | 'agent';
+    agent_id?: string;
   }>;
   created_at: string;
   updated_at: string;
