@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Phone, Clock, DollarSign, TrendingUp, RefreshCw, FileText, User, Calendar } from 'lucide-react';
 import { getCallHistory, getCallAnalytics, syncCallsForClinic, CallRecord, CallAnalytics } from '../services/callHistoryService';
 import { getClinic } from '../services/clinicService';
+import { getClinicAgents } from '../services/agentService';
+import { Agent } from '../types';
 
 type DateFilter = 'today' | 'week' | 'month' | 'custom' | 'all';
 
@@ -19,10 +21,12 @@ export default function Analytics() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('week');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('all');
 
   useEffect(() => {
     loadData();
-  }, [clinicId, dateFilter, customStartDate, customEndDate]);
+  }, [clinicId, dateFilter, customStartDate, customEndDate, selectedAgentId]);
 
   function getDateRange(): { start: Date | null; end: Date | null } {
     const now = new Date();
@@ -56,12 +60,14 @@ export default function Analytics() {
   async function loadData() {
     if (!clinicId) return;
     try {
-      const [clinicData, allCallsData] = await Promise.all([
+      const [clinicData, allCallsData, agentsData] = await Promise.all([
         getClinic(clinicId),
         getCallHistory(clinicId, { limit: 1000 }),
+        getClinicAgents(clinicId),
       ]);
 
       setClinic(clinicData);
+      setAgents(agentsData);
 
       // Aplicar markup del 20% al user_cost
       const callsWithMarkup = allCallsData.map(call => ({
@@ -78,6 +84,11 @@ export default function Analytics() {
           const callDate = new Date(call.started_at);
           return callDate >= start && callDate <= end;
         });
+      }
+
+      // Filtrar por agente si se ha seleccionado uno específico
+      if (selectedAgentId !== 'all') {
+        filteredCalls = filteredCalls.filter(call => call.agent_id === selectedAgentId);
       }
 
       setCalls(filteredCalls);
@@ -323,37 +334,54 @@ export default function Analytics() {
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-gray-900">Historial de Llamadas</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`px-3 py-1 rounded-lg text-sm ${
-                    filter === 'all'
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+              <div className="flex items-center gap-3">
+                {/* Selector de Agente */}
+                <select
+                  value={selectedAgentId}
+                  onChange={(e) => setSelectedAgentId(e.target.value)}
+                  className="px-3 py-1.5 border-2 border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                 >
-                  Todas
-                </button>
-                <button
-                  onClick={() => setFilter('completed')}
-                  className={`px-3 py-1 rounded-lg text-sm ${
-                    filter === 'completed'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Completadas
-                </button>
-                <button
-                  onClick={() => setFilter('missed')}
-                  className={`px-3 py-1 rounded-lg text-sm ${
-                    filter === 'missed'
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                  <option value="all">Todos los agentes</option>
+                  {agents.map((agent) => (
+                    <option key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Filtros de Estado */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setFilter('all')}
+                    className={`px-3 py-1 rounded-lg text-sm ${
+                      filter === 'all'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Todas
+                  </button>
+                  <button
+                    onClick={() => setFilter('completed')}
+                    className={`px-3 py-1 rounded-lg text-sm ${
+                      filter === 'completed'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Completadas
+                  </button>
+                  <button
+                    onClick={() => setFilter('missed')}
+                    className={`px-3 py-1 rounded-lg text-sm ${
+                      filter === 'missed'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
                 >
                   Perdidas
                 </button>
+                </div>
               </div>
             </div>
           </div>
