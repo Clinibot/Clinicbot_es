@@ -19,6 +19,7 @@ interface WebhookPayload {
     end_timestamp: number;
     from_number?: string;
     to_number?: string;
+    retell_llm_dynamic_variables?: Record<string, any>;
     call_analysis?: {
       call_summary?: string;
       user_sentiment?: string;
@@ -132,6 +133,7 @@ Deno.serve(async (req: Request) => {
         in_voicemail: call.call_analysis?.in_voicemail,
         disconnection_reason: call.disconnection_reason,
         public_log_url: call.public_log_url,
+        custom_data: call.retell_llm_dynamic_variables || {},
       },
     };
 
