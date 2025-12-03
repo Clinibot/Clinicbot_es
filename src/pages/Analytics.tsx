@@ -1,12 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, Clock, DollarSign, TrendingUp, RefreshCw, FileText, User, Calendar, Target } from 'lucide-react';
+import { ArrowLeft, Phone, Clock, DollarSign, TrendingUp, RefreshCw, FileText, User, Calendar, Target, BarChart3, PieChart } from 'lucide-react';
 import { getCallHistory, getCallAnalytics, syncCallsForClinic, CallRecord, CallAnalytics } from '../services/callHistoryService';
 import { getClinic } from '../services/clinicService';
 import { getClinicAgents } from '../services/agentService';
 import { Agent, SuccessMetric } from '../types';
+import { LineChart, Line, BarChart, Bar, PieChart as RechartsPie, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 type DateFilter = 'today' | 'week' | 'month' | 'custom' | 'all';
+type GroupBy = 'day' | 'week' | 'month';
+
+const COLORS = {
+  positive: '#10b981',
+  negative: '#ef4444',
+  neutral: '#6b7280',
+  completed: '#3b82f6',
+  missed: '#f59e0b',
+};
 
 export default function Analytics() {
   const { clinicId } = useParams();
@@ -23,6 +33,7 @@ export default function Analytics() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>('all');
   const [selectedMetricId, setSelectedMetricId] = useState<string>('default');
+  const [groupBy, setGroupBy] = useState<GroupBy>('day');
 
   useEffect(() => {
     loadData();
@@ -69,8 +80,6 @@ export default function Analytics() {
       setClinic(clinicData);
       setAgents(agentsData);
 
-      // El markup ya está aplicado en el backend, no aplicar de nuevo
-      // Filtrar por rango de fechas
       const { start, end } = getDateRange();
       let filteredCalls = allCallsData;
 
@@ -81,14 +90,12 @@ export default function Analytics() {
         });
       }
 
-      // Filtrar por agente si se ha seleccionado uno específico
       if (selectedAgentId !== 'all') {
         filteredCalls = filteredCalls.filter(call => call.agent_id === selectedAgentId);
       }
 
       setCalls(filteredCalls);
 
-      // Calcular analytics con los datos filtrados
       const analyticsData: CallAnalytics = {
         totalCalls: filteredCalls.length,
         totalDuration: filteredCalls.reduce((sum, call) => sum + call.duration_seconds, 0),
@@ -139,13 +146,11 @@ export default function Analytics() {
   function calculateSuccessRate(): number {
     if (filteredCalls.length === 0) return 0;
 
-    // Si es "default", usar el comportamiento antiguo (llamadas completadas)
     if (selectedMetricId === 'default') {
       const completedCalls = filteredCalls.filter(c => c.call_status === 'completed').length;
       return Math.round((completedCalls / filteredCalls.length) * 100);
     }
 
-    // Buscar la métrica seleccionada en los agentes
     let selectedMetric: SuccessMetric | null = null;
     for (const agent of agents) {
       if (agent.success_metrics) {
@@ -161,27 +166,23 @@ export default function Analytics() {
 
     let successfulCalls = 0;
 
-    // Calcular éxito basado en el tipo de métrica
     for (const call of filteredCalls) {
       let isSuccessful = false;
 
       switch (selectedMetric.type) {
         case 'boolean':
-          // Verificar si el campo custom_data tiene el valor true
           if (selectedMetric.custom_data_key && call.metadata?.custom_data) {
             isSuccessful = call.metadata.custom_data[selectedMetric.custom_data_key] === true;
           }
           break;
 
         case 'duration':
-          // Verificar si la duración es mayor o igual al mínimo
           if (selectedMetric.min_duration) {
             isSuccessful = call.duration_seconds >= selectedMetric.min_duration;
           }
           break;
 
         case 'text':
-          // Verificar si el campo custom_data tiene el valor esperado
           if (selectedMetric.custom_data_key && selectedMetric.expected_value && call.metadata?.custom_data) {
             isSuccessful = call.metadata.custom_data[selectedMetric.custom_data_key] === selectedMetric.expected_value;
           }
@@ -196,7 +197,6 @@ export default function Analytics() {
 
   function getAvailableMetrics(): SuccessMetric[] {
     if (selectedAgentId === 'all') {
-      // Si está seleccionado "Todos", recopilar todas las métricas únicas de todos los agentes
       const allMetrics: SuccessMetric[] = [];
       const seenMetricIds = new Set<string>();
 
@@ -212,13 +212,110 @@ export default function Analytics() {
       }
       return allMetrics;
     } else {
-      // Si hay un agente específico seleccionado, mostrar solo sus métricas
       const agent = agents.find(a => a.id === selectedAgentId);
       return agent?.success_metrics || [];
     }
   }
 
+  // Preparar datos para gráfico de tendencia temporal
+  function prepareTimeSeriesData() {
+    const groupedData = new Map<string, { date: string; calls: number; cost: number; duration: number }>();
+
+    filteredCalls.forEach(call => {
+      const date = new Date(call.started_at);
+      let key: string;
+
+      switch (groupBy) {
+        case 'day':
+          key = date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+          break;
+        case 'week':
+          const weekStart = new Date(date);
+          weekStart.setDate(date.getDate() - date.getDay());
+          key = weekStart.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+          break;
+        case 'month':
+          key = date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
+          break;
+      }
+
+      if (!groupedData.has(key)) {
+        groupedData.set(key, { date: key, calls: 0, cost: 0, duration: 0 });
+      }
+
+      const data = groupedData.get(key)!;
+      data.calls += 1;
+      data.cost += call.user_cost;
+      data.duration += call.duration_seconds;
+    });
+
+    return Array.from(groupedData.values()).sort((a, b) => {
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
+  }
+
+  // Preparar datos para gráfico de sentimientos
+  function prepareSentimentData() {
+    const sentiments = {
+      positive: 0,
+      negative: 0,
+      neutral: 0,
+    };
+
+    filteredCalls.forEach(call => {
+      const sentiment = call.metadata?.sentiment?.toLowerCase();
+      if (sentiment === 'positive') {
+        sentiments.positive++;
+      } else if (sentiment === 'negative') {
+        sentiments.negative++;
+      } else {
+        sentiments.neutral++;
+      }
+    });
+
+    return [
+      { name: 'Positivo', value: sentiments.positive, color: COLORS.positive },
+      { name: 'Negativo', value: sentiments.negative, color: COLORS.negative },
+      { name: 'Neutral', value: sentiments.neutral, color: COLORS.neutral },
+    ].filter(item => item.value > 0);
+  }
+
+  // Preparar datos para gráfico de estados
+  function prepareStatusData() {
+    return [
+      { name: 'Completadas', value: analytics?.completedCalls || 0, color: COLORS.completed },
+      { name: 'Perdidas', value: analytics?.missedCalls || 0, color: COLORS.missed },
+    ].filter(item => item.value > 0);
+  }
+
+  // Preparar datos para comparación entre agentes
+  function prepareAgentComparisonData() {
+    const agentStats = new Map<string, { name: string; calls: number; avgDuration: number; cost: number }>();
+
+    filteredCalls.forEach(call => {
+      const agentName = call.agent?.name || 'Desconocido';
+      if (!agentStats.has(agentName)) {
+        agentStats.set(agentName, { name: agentName, calls: 0, avgDuration: 0, cost: 0 });
+      }
+
+      const stats = agentStats.get(agentName)!;
+      stats.calls += 1;
+      stats.avgDuration += call.duration_seconds;
+      stats.cost += call.user_cost;
+    });
+
+    return Array.from(agentStats.values()).map(stats => ({
+      ...stats,
+      avgDuration: Math.round(stats.avgDuration / stats.calls),
+      cost: parseFloat(stats.cost.toFixed(2)),
+    }));
+  }
+
   const filteredCalls = calls;
+  const timeSeriesData = prepareTimeSeriesData();
+  const sentimentData = prepareSentimentData();
+  const statusData = prepareStatusData();
+  const agentComparisonData = prepareAgentComparisonData();
 
   if (loading) {
     return (
@@ -341,6 +438,7 @@ export default function Analytics() {
           </div>
         </div>
 
+        {/* KPIs */}
         {analytics && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow p-6">
@@ -411,39 +509,182 @@ export default function Analytics() {
           </div>
         )}
 
+        {/* Filtros de Agente */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <User className="w-5 h-5 text-blue-600" />
+              <h3 className="text-sm font-semibold text-gray-900">Filtrar por Agente</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-gray-600" />
+              <select
+                value={groupBy}
+                onChange={e => setGroupBy(e.target.value as GroupBy)}
+                className="text-xs px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="day">Vista Diaria</option>
+                <option value="week">Vista Semanal</option>
+                <option value="month">Vista Mensual</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setSelectedAgentId('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                selectedAgentId === 'all'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Todos
+            </button>
+            {agents.map((agent) => (
+              <button
+                key={agent.id}
+                onClick={() => setSelectedAgentId(agent.id)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  selectedAgentId === agent.id
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {agent.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Gráficos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Gráfico de Tendencia de Llamadas */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Tendencia de Llamadas</h3>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={timeSeriesData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#6b7280" />
+                <YAxis tick={{ fontSize: 12 }} stroke="#6b7280" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                  labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Line type="monotone" dataKey="calls" stroke="#3b82f6" strokeWidth={2} name="Llamadas" dot={{ fill: '#3b82f6', r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Gráfico de Costos */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <DollarSign className="w-5 h-5 text-green-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Costos por Periodo</h3>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={timeSeriesData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#6b7280" />
+                <YAxis tick={{ fontSize: 12 }} stroke="#6b7280" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                  labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
+                  formatter={(value: number) => formatCurrency(value)}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar dataKey="cost" fill="#10b981" name="Costo (€)" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Gráfico de Sentimientos */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <PieChart className="w-5 h-5 text-purple-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Distribución de Sentimientos</h3>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <RechartsPie>
+                <Pie
+                  data={sentimentData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={(entry) => `${entry.name}: ${entry.value}`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {sentimentData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </RechartsPie>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Gráfico de Estados */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="w-5 h-5 text-orange-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Estado de Llamadas</h3>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <RechartsPie>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={(entry) => `${entry.name}: ${entry.value}`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {statusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </RechartsPie>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Comparación entre Agentes */}
+        {selectedAgentId === 'all' && agentComparisonData.length > 1 && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <User className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Comparación entre Agentes</h3>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={agentComparisonData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="#6b7280" />
+                <YAxis yAxisId="left" tick={{ fontSize: 12 }} stroke="#6b7280" />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} stroke="#6b7280" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                  labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar yAxisId="left" dataKey="calls" fill="#6366f1" name="Llamadas" radius={[8, 8, 0, 0]} />
+                <Bar yAxisId="right" dataKey="cost" fill="#10b981" name="Costo (€)" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Historial de Llamadas */}
         <div className="bg-white rounded-lg shadow">
           <div className="p-6 border-b border-gray-200">
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Historial de Llamadas</h2>
-
-              {/* Botones de Agente */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-gray-700 mr-2">Agente:</span>
-                <button
-                  onClick={() => setSelectedAgentId('all')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    selectedAgentId === 'all'
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Todos
-                </button>
-                {agents.map((agent) => (
-                  <button
-                    key={agent.id}
-                    onClick={() => setSelectedAgentId(agent.id)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      selectedAgentId === agent.id
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {agent.name}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <h2 className="text-xl font-semibold text-gray-900">Historial de Llamadas</h2>
           </div>
 
           <div className="overflow-x-auto">
