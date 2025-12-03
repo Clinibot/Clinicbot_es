@@ -23,6 +23,15 @@ export interface ClinicStaff {
   created_at: string;
 }
 
+export interface SuccessMetric {
+  id: string;
+  name: string;
+  type: 'boolean' | 'duration' | 'text';
+  custom_data_key?: string; // Para métricas de custom data
+  min_duration?: number; // Para métricas de duración (en segundos)
+  expected_value?: string; // Para métricas de texto
+}
+
 export interface Agent {
   id: string;
   clinic_id: string;
@@ -40,6 +49,7 @@ export interface Agent {
     type: 'phone' | 'agent';
     agent_id?: string;
   }>;
+  success_metrics?: SuccessMetric[];
   created_at: string;
   updated_at: string;
 }
