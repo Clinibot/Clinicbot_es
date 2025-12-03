@@ -390,7 +390,8 @@ export default function Analytics() {
                   </tr>
                 ) : (
                   filteredCalls.map((call) => (
-                    <tr key={call.id} className="hover:bg-gray-50">
+                    <React.Fragment key={call.id}>
+                      <tr className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <User className="w-5 h-5 text-gray-400 mr-2" />
@@ -547,6 +548,7 @@ export default function Analytics() {
                         </td>
                       </tr>
                     )}
+                    </React.Fragment>
                   ))
                 )}
               </tbody>
