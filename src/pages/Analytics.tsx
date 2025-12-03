@@ -452,7 +452,6 @@ export default function Analytics() {
                         </button>
                       </td>
                     </tr>
-                    {/* Fila expandible con detalles */}
                     {expandedCallId === call.id && (
                       <tr className="bg-gray-50">
                         <td colSpan={7} className="px-6 py-6">
