@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, Clock, DollarSign, TrendingUp, RefreshCw, FileText, User, Calendar, Play } from 'lucide-react';
+import { ArrowLeft, Phone, Clock, DollarSign, TrendingUp, RefreshCw, FileText, User, Calendar } from 'lucide-react';
 import { getCallHistory, getCallAnalytics, syncCallsForClinic, CallRecord, CallAnalytics } from '../services/callHistoryService';
 import { getClinic } from '../services/clinicService';
 
@@ -190,7 +190,7 @@ export default function Analytics() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              📅 Hoy
+              Hoy
             </button>
             <button
               onClick={() => setDateFilter('week')}
@@ -200,7 +200,7 @@ export default function Analytics() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              📊 Última Semana
+              Última Semana
             </button>
             <button
               onClick={() => setDateFilter('month')}
@@ -210,7 +210,7 @@ export default function Analytics() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              📈 Último Mes
+              Último Mes
             </button>
             <button
               onClick={() => setDateFilter('all')}
@@ -220,7 +220,7 @@ export default function Analytics() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              🌐 Todas
+              Todas
             </button>
             <button
               onClick={() => setDateFilter('custom')}
@@ -230,7 +230,7 @@ export default function Analytics() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              🗓️ Personalizado
+              Personalizado
             </button>
 
             {dateFilter === 'custom' && (
@@ -507,21 +507,18 @@ function CallDetailModal({ call, onClose }: CallDetailModalProps) {
             <div>
               <p className="text-xs text-gray-500 font-medium">Estado</p>
               <p className="text-sm font-semibold text-gray-900">
-                {call.call_status === 'completed' ? '✓ Completada' : '✗ No completada'}
+                {call.call_status === 'completed' ? 'Completada' : 'No completada'}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-medium">Coste (+20%)</p>
+              <p className="text-xs text-gray-500 font-medium">Coste</p>
               <p className="text-sm font-semibold text-green-700">{formatCurrency(call.user_cost)}</p>
             </div>
           </div>
 
           {call.recording_url && (
             <div className="mb-4 bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Play className="w-4 h-4 text-purple-600" />
-                <p className="text-sm font-semibold text-gray-700">Grabación de Audio</p>
-              </div>
+              <p className="text-sm font-semibold text-gray-700 mb-2">Grabación de Audio</p>
               <audio controls className="w-full">
                 <source src={call.recording_url} type="audio/mpeg" />
                 Tu navegador no soporta el elemento de audio.
@@ -540,7 +537,7 @@ function CallDetailModal({ call, onClose }: CallDetailModalProps) {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              📝 Resumen
+              Resumen
             </button>
             <button
               onClick={() => setActiveTab('transcript')}
@@ -550,7 +547,7 @@ function CallDetailModal({ call, onClose }: CallDetailModalProps) {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              💬 Transcripción
+              Transcripción
             </button>
             <button
               onClick={() => setActiveTab('metadata')}
@@ -560,7 +557,7 @@ function CallDetailModal({ call, onClose }: CallDetailModalProps) {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              📊 Datos Adicionales
+              Datos Adicionales
             </button>
           </div>
         </div>
@@ -570,7 +567,7 @@ function CallDetailModal({ call, onClose }: CallDetailModalProps) {
             <div className="space-y-4">
               {call.summary ? (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-blue-900 mb-2">📋 Resumen de la Llamada</h4>
+                  <h4 className="text-sm font-semibold text-blue-900 mb-2">Resumen de la Llamada</h4>
                   <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{call.summary}</p>
                 </div>
               ) : (
@@ -579,21 +576,21 @@ function CallDetailModal({ call, onClose }: CallDetailModalProps) {
 
               {call.intent && (
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-purple-900 mb-2">🎯 Intención de la Llamada</h4>
+                  <h4 className="text-sm font-semibold text-purple-900 mb-2">Intención de la Llamada</h4>
                   <p className="text-sm text-gray-700">{call.intent}</p>
                 </div>
               )}
 
               {call.metadata?.sentiment && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-green-900 mb-2">😊 Sentimiento</h4>
+                  <h4 className="text-sm font-semibold text-green-900 mb-2">Sentimiento</h4>
                   <p className="text-sm text-gray-700">{call.metadata.sentiment}</p>
                 </div>
               )}
 
               {call.metadata?.disconnection_reason && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-amber-900 mb-2">🔌 Razón de Desconexión</h4>
+                  <h4 className="text-sm font-semibold text-amber-900 mb-2">Razón de Desconexión</h4>
                   <p className="text-sm text-gray-700">{call.metadata.disconnection_reason}</p>
                 </div>
               )}
@@ -604,7 +601,7 @@ function CallDetailModal({ call, onClose }: CallDetailModalProps) {
             <div>
               {call.transcript ? (
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-3">💬 Transcripción Completa</h4>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Transcripción Completa</h4>
                   <div className="prose prose-sm max-w-none">
                     <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-mono">
                       {call.transcript}
@@ -644,7 +641,7 @@ function CallDetailModal({ call, onClose }: CallDetailModalProps) {
 
               {call.metadata && Object.keys(call.metadata).length > 0 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-blue-900 mb-3">🔧 Metadatos Personalizados</h4>
+                  <h4 className="text-sm font-semibold text-blue-900 mb-3">Metadatos Personalizados</h4>
                   <div className="space-y-2">
                     {Object.entries(call.metadata).map(([key, value]) => (
                       <div key={key} className="flex items-start gap-2">
@@ -659,26 +656,6 @@ function CallDetailModal({ call, onClose }: CallDetailModalProps) {
                   </div>
                 </div>
               )}
-
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-green-900 mb-3">💰 Información de Costes</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Coste Retell AI (original):</span>
-                    <span className="font-semibold text-gray-900">{formatCurrency(call.external_cost)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Markup (+20%):</span>
-                    <span className="font-semibold text-green-700">
-                      +{formatCurrency(call.user_cost - call.external_cost)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t border-green-200">
-                    <span className="text-gray-900 font-semibold">Coste Final (usuario):</span>
-                    <span className="font-bold text-green-700 text-lg">{formatCurrency(call.user_cost)}</span>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
         </div>
