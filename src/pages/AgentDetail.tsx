@@ -414,7 +414,7 @@ export default function AgentDetail() {
                   <div className="space-y-2">
                     {calcomEvents.map((event) => {
                       const isExpanded = expandedEventId === event.id;
-                      const bookingUrl = `https://cal.com/${event.external_event_id}`;
+                      const bookingUrl = `https://app.cal.com/event-types/${event.external_event_id}`;
 
                       return (
                         <div key={event.id} className="border border-green-200 rounded-lg overflow-hidden">
