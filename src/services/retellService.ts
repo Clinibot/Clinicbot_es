@@ -1,6 +1,27 @@
 const RETELL_API_KEY = import.meta.env.VITE_RETELL_API_KEY;
 const WEBHOOK_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/retell-webhook`;
 
+export async function listRetellVoices(): Promise<any[]> {
+  console.log('=== Listing Available Retell Voices ===');
+  const response = await fetch('https://api.retellai.com/list-voices', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${RETELL_API_KEY}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Failed to list voices:', errorText);
+    throw new Error(`Failed to list voices: ${response.status} ${errorText}`);
+  }
+
+  const voices = await response.json();
+  console.log(`✅ Found ${voices.length} available voices`);
+  console.log('Voices:', voices);
+  return voices;
+}
+
 export async function testRetellConnection(): Promise<void> {
   console.log('=== Testing Retell API connection ===');
   console.log('API Key:', RETELL_API_KEY?.substring(0, 15) + '...');
