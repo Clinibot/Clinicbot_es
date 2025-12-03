@@ -260,6 +260,8 @@ export async function createRetellAgent(
 
   console.log('Minimal payload response status:', response.status, response.statusText);
 
+  let lastPayloadUsed: any = minimalPayload;
+
   if (!response.ok) {
     console.log('Minimal payload failed, trying FULL payload...');
 
@@ -291,6 +293,8 @@ export async function createRetellAgent(
     console.log('Trying full payload:', JSON.stringify(payload, null, 2));
     console.log('API URL:', 'https://api.retellai.com/create-agent');
 
+    lastPayloadUsed = payload;
+
     response = await fetch('https://api.retellai.com/create-agent', {
       method: 'POST',
       headers: {
@@ -308,27 +312,25 @@ export async function createRetellAgent(
     console.error('❌ Agent creation failed!');
     console.error('Status:', response.status, response.statusText);
     console.error('Response:', errorText);
-    console.error('Headers sent:', {
-      'Authorization': 'Bearer ' + RETELL_API_KEY?.substring(0, 20) + '...',
-      'Content-Type': 'application/json'
-    });
+    console.error('Response body:', errorText);
+    console.error('Exact payload that failed:', JSON.stringify(lastPayloadUsed, null, 2));
 
     if (response.status === 404) {
-      // Log the exact payload that was sent for debugging
-      console.error('Payload that caused 404:', JSON.stringify(minimalPayload, null, 2));
-
       throw new Error(
-        `Error 404 al crear agente en Retell AI.\n\n` +
-        `Idioma enviado: "${language}"\n` +
-        `Voice ID: "${voiceId}"\n\n` +
-        'Posibles causas:\n' +
-        '1. El código de idioma no es soportado por Retell AI\n' +
-        '   - Idiomas confirmados: es-ES, en-US, en-GB, multi, fr-FR, de-DE\n' +
-        '   - Evita usar: ca-ES (catalán), es-419 (latam)\n' +
-        '2. Tu cuenta de Retell AI podría necesitar activación\n' +
-        '3. La API key no tiene permisos completos\n\n' +
-        'Solución: Cambia el idioma a "Español (España)" o "Multi-idioma" e intenta de nuevo.\n' +
-        'Más info: https://docs.retellai.com/agent/language'
+        `❌ Error 404: No se pudo crear el agente en Retell AI\n\n` +
+        `📋 Datos enviados:\n` +
+        `  • Idioma: "${language}"\n` +
+        `  • Voice ID: "${voiceId}"\n` +
+        `  • LLM ID: "${llmId}" ✓ (creado exitosamente)\n\n` +
+        `🔍 Causa más probable:\n` +
+        `  Voice ID inválido. Retell AI requiere voice IDs con prefijo:\n` +
+        `  • "11labs-{nombre}" para ElevenLabs\n` +
+        `  • "openai-{nombre}" para OpenAI\n` +
+        `  • "deepgram-{nombre}" para Deepgram\n\n` +
+        `✅ Solución:\n` +
+        `  Los Voice IDs se acaban de actualizar al formato correcto.\n` +
+        `  Recarga la página e intenta crear el agente de nuevo.\n\n` +
+        `📖 Más info: https://docs.retellai.com/api-references/create-agent`
       );
     }
 
