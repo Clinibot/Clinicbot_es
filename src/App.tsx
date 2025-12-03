@@ -11,6 +11,7 @@ import AgentDetail from './pages/AgentDetail';
 import Analytics from './pages/Analytics';
 import ManageCalcom from './pages/ManageCalcom';
 import ManagePhones from './pages/ManagePhones';
+import MakeCalls from './pages/MakeCalls';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -134,6 +135,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ManagePhones />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clinic/:clinicId/calls"
+            element={
+              <ProtectedRoute>
+                <MakeCalls />
               </ProtectedRoute>
             }
           />
