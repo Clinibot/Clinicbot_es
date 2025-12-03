@@ -55,18 +55,17 @@ export async function deleteAgent(agentId: string) {
   if (error) throw error;
 }
 
-// Voice IDs - Custom ElevenLabs voices from user's account
-// These are raw ElevenLabs voice IDs connected to Retell AI
-// See: https://docs.retellai.com/api-references/list-voices
+// Voice IDs - From Retell AI dashboard (Custom ElevenLabs voices)
+// These IDs are assigned by Retell AI when importing from ElevenLabs
 export const VOICES = [
-  // ElevenLabs voices - Spanish optimized
-  { id: 'UOIqAnmS11Reiei1Ytkc', name: 'Carolina - Voz Española (Femenino)' },
-  { id: 'kwNLkNjbQHMw9YUFZsHI', name: 'Alejandra - Voz Española (Femenino)' },
-  { id: 'gD1IexrzCvsXPHUuT0s3', name: 'Sara - Voz Española (Femenino)' },
-  { id: 'v3V1d2rk6528UrLKRuy8', name: 'Susi - Voz Española (Femenino)' },
-  { id: '7QQzpAyzlKTVrRzQJmTE', name: 'Dani - Voz Española (Masculino)' },
-  { id: 'HIYif4jehvc9P9A8DYbX', name: 'Pablo - Voz Española (Masculino)' },
-  { id: '851ejYcv2BoNPjrkw93G', name: 'Toni - Voz Española (Masculino)' },
+  // ElevenLabs custom voices - Spanish optimized
+  { id: 'custom-Carolina', name: 'Carolina - Spanish Woman (Femenino)' },
+  { id: 'custom_voice_6105206ed083e6faf35d86f533', name: 'Alejandra - Voz Española (Femenino)' },
+  { id: 'custom-Sara-Martin', name: 'Sara Martin - Voz Española (Femenino)' },
+  { id: 'custom-Susi', name: 'Susi - Voz Española (Femenino)' },
+  { id: 'custom_voice_5fcbf67dfede3356325ce9e8d7', name: 'Dani Español (Masculino)' },
+  { id: 'custom_voice_1677f5ab3638d48617f624562c', name: 'Pablo - Voz Española (Masculino)' },
+  { id: 'custom_voice_d4f438ffa5599beda7caa36699', name: 'Tony - Your Casual Voice (Masculino)' },
 
   // OpenAI fallback voices (multilingual support)
   { id: 'openai-Alloy', name: 'Alloy - OpenAI (Neutro)' },
