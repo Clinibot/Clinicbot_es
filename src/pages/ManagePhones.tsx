@@ -14,7 +14,7 @@ export default function ManagePhones() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumber[]>([]);
   const [loading, setLoading] = useState(true);
-  const [requestingFor, setRequestingFor] = useState<string | null>(null);
+  const [requestingFor, setRequestingFor] = useState<'requesting' | null>(null);
 
   useEffect(() => {
     loadData();
@@ -38,28 +38,33 @@ export default function ManagePhones() {
     }
   }
 
-  async function handleRequestPhone(agent: Agent, country: string) {
+  async function handleRequestPhone(country: string) {
     if (!clinic || !clinicId) return;
 
     const confirmed = confirm(
-      `¿Solicitar número virtual de ${country} para el agente "${agent.name}"?\n\n` +
-      `Precio: ${country === 'España' ? '5€/mes' : 'Consultar'}`
+      `¿Solicitar número virtual de ${country}?\n\n` +
+      `Precio: ${country === 'España' ? '5€/mes' : 'Consultar'}\n\n` +
+      `El número estará disponible para todos tus agentes y podrás asignarlo libremente.`
     );
 
     if (!confirmed) return;
 
-    setRequestingFor(agent.id);
+    setRequestingFor('requesting');
 
     try {
-      const requestNotes = `Solicitud de número virtual de ${country} para el agente "${agent.name}" (Tipo: ${agent.agent_type === 'inbound' ? 'Entrante' : 'Saliente'})`;
+      const requestNotes = `Solicitud de número virtual de ${country} para la clínica ${clinic.name}`;
 
-      await createPhoneRequest(clinicId, agent.id, requestNotes);
+      // Pass null for agent_id since we're requesting for the clinic, not a specific agent
+      await createPhoneRequest(clinicId, null, requestNotes);
 
       alert(
         `✅ Solicitud enviada correctamente\n\n` +
-        `Se ha solicitado un número virtual de ${country} para "${agent.name}".\n` +
-        `El administrador revisará tu solicitud pronto.`
+        `Se ha solicitado un número virtual de ${country}.\n` +
+        `Una vez aprobado, podrás asignarlo a tus agentes desde esta página.`
       );
+
+      // Reload data to refresh the view
+      await loadData();
     } catch (error) {
       alert('Error al solicitar número: ' + (error instanceof Error ? error.message : 'Error desconocido'));
     } finally {
@@ -315,65 +320,38 @@ export default function ManagePhones() {
               Solicitar Nuevo Teléfono
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              Selecciona el agente para el que necesitas un número virtual
+              Solicita un número virtual para tu clínica. Una vez aprobado, podrás asignarlo a tus agentes.
             </p>
           </div>
 
-          <div className="divide-y divide-gray-200">
-            {agents.length === 0 ? (
-              <div className="p-12 text-center">
-                <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">No hay agentes creados todavía</p>
+          <div className="p-8">
+            <div className="max-w-2xl mx-auto text-center">
+              <Phone className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">¿Necesitas un nuevo número?</h3>
+              <p className="text-sm text-gray-600 mb-6">
+                Solicita un número virtual que podrás asignar libremente a cualquiera de tus agentes (1 entrante + 1 saliente por número)
+              </p>
+
+              <div className="flex gap-3 justify-center">
                 <button
-                  onClick={() => navigate(`/clinic/${clinicId}/create-agent`)}
-                  className="px-4 py-2 bg-gray-50 text-gray-900 font-semibold rounded-lg border-2 border-blue-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow hover:shadow-md"
+                  onClick={() => handleRequestPhone('España')}
+                  disabled={requestingFor === 'requesting'}
+                  className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Crear Primer Agente
+                  {requestingFor === 'requesting' ? 'Solicitando...' : 'Solicitar España (5€/mes)'}
+                </button>
+                <button
+                  onClick={() => {
+                    const country = prompt('¿De qué país necesitas el número?');
+                    if (country) handleRequestPhone(country);
+                  }}
+                  disabled={requestingFor === 'requesting'}
+                  className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Otro país
                 </button>
               </div>
-            ) : (
-              agents.map((agent) => (
-                <div key={agent.id} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="text-base font-semibold text-gray-900">{agent.name}</h3>
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                          agent.agent_type === 'inbound'
-                            ? 'bg-blue-50 text-blue-700'
-                            : 'bg-purple-50 text-purple-700'
-                        }`}>
-                          {agent.agent_type === 'inbound' ? 'Entrante' : 'Saliente'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        {agent.agent_type === 'inbound' ? 'Recibirá llamadas' : 'Hará llamadas'}
-                      </p>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleRequestPhone(agent, 'España')}
-                        disabled={requestingFor === agent.id}
-                        className="px-4 py-2 bg-gray-50 text-gray-900 font-semibold rounded-lg border-2 border-blue-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {requestingFor === agent.id ? 'Solicitando...' : 'España (5€/mes)'}
-                      </button>
-                      <button
-                        onClick={() => {
-                          const country = prompt('¿De qué país necesitas el número?');
-                          if (country) handleRequestPhone(agent, country);
-                        }}
-                        disabled={requestingFor === agent.id}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Otro país
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
+            </div>
           </div>
         </div>
 

@@ -64,7 +64,7 @@ export default function AdminPanel() {
     try {
       await approvePhoneRequest(requestId, phoneNumber, country, monthlyCost, adminNotes);
       await loadData(); // Reload data
-      alert('✅ Solicitud aprobada y teléfono asignado al agente');
+      alert('✅ Solicitud aprobada correctamente\n\nEl número ha sido creado y está disponible para que el usuario lo asigne a sus agentes.');
     } catch (error) {
       alert('Error al aprobar la solicitud: ' + (error instanceof Error ? error.message : 'Error desconocido'));
       console.error(error);
@@ -278,12 +278,16 @@ export default function AdminPanel() {
                         </div>
                         <div className="flex items-center gap-2 text-gray-700">
                           <Phone className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                          <span className="font-medium">Agente:</span>
-                          <span>{request.agent?.name || 'N/A'}</span>
-                          {request.agent && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${request.agent.agent_type === 'inbound' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}`}>
-                              {request.agent.agent_type === 'inbound' ? 'Entrante' : 'Saliente'}
-                            </span>
+                          <span className="font-medium">Para:</span>
+                          {request.agent ? (
+                            <>
+                              <span>{request.agent.name}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${request.agent.agent_type === 'inbound' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}`}>
+                                {request.agent.agent_type === 'inbound' ? 'Entrante' : 'Saliente'}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-blue-600 font-medium">Toda la clínica (sin asignar)</span>
                           )}
                         </div>
                       </div>
