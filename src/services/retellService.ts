@@ -525,3 +525,73 @@ export async function getRetellAgent(agentId: string): Promise<any> {
 
   return response.json();
 }
+
+/**
+ * Assign a phone number to an agent in Retell AI
+ * @param phoneNumber The phone number (e.g., "+34612345678")
+ * @param agentId The Retell agent ID
+ * @returns The updated phone number configuration
+ */
+export async function assignPhoneNumberToRetellAgent(
+  phoneNumber: string,
+  agentId: string
+): Promise<any> {
+  console.log('=== Assigning Phone Number in Retell AI ===');
+  console.log('Phone Number:', phoneNumber);
+  console.log('Agent ID:', agentId);
+
+  const response = await fetch(`https://api.retellai.com/update-phone-number/${encodeURIComponent(phoneNumber)}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${RETELL_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      agent_id: agentId,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('❌ Retell API error:', errorText);
+    throw new Error(`Failed to assign phone number in Retell AI: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  console.log('✅ Phone number assigned successfully in Retell AI');
+  return data;
+}
+
+/**
+ * Unassign a phone number from an agent in Retell AI
+ * @param phoneNumber The phone number (e.g., "+34612345678")
+ * @returns The updated phone number configuration
+ */
+export async function unassignPhoneNumberFromRetellAgent(
+  phoneNumber: string
+): Promise<any> {
+  console.log('=== Unassigning Phone Number in Retell AI ===');
+  console.log('Phone Number:', phoneNumber);
+
+  const response = await fetch(`https://api.retellai.com/update-phone-number/${encodeURIComponent(phoneNumber)}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${RETELL_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      agent_id: null,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('❌ Retell API error:', errorText);
+    throw new Error(`Failed to unassign phone number in Retell AI: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  console.log('✅ Phone number unassigned successfully in Retell AI');
+  return data;
+}
+
