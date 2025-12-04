@@ -595,3 +595,56 @@ export async function unassignPhoneNumberFromRetellAgent(
   return data;
 }
 
+/**
+ * List all phone numbers registered in Retell AI
+ * @returns Array of phone number configurations
+ */
+export async function listRetellPhoneNumbers(): Promise<any[]> {
+  console.log('=== Listing Phone Numbers in Retell AI ===');
+
+  const response = await fetch('https://api.retellai.com/list-phone-numbers', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${RETELL_API_KEY}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('❌ Retell API error:', errorText);
+    throw new Error(`Failed to list phone numbers from Retell AI: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  console.log(`✅ Found ${data.length} phone numbers in Retell AI`);
+  console.log('Phone numbers:', data);
+  return data;
+}
+
+/**
+ * Get a specific phone number from Retell AI
+ * @param phoneNumber The phone number (e.g., "+34612345678")
+ * @returns The phone number configuration
+ */
+export async function getRetellPhoneNumber(phoneNumber: string): Promise<any> {
+  console.log('=== Getting Phone Number from Retell AI ===');
+  console.log('Phone Number:', phoneNumber);
+
+  const response = await fetch(`https://api.retellai.com/get-phone-number/${encodeURIComponent(phoneNumber)}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${RETELL_API_KEY}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('❌ Retell API error:', errorText);
+    throw new Error(`Failed to get phone number from Retell AI: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  console.log('✅ Phone number retrieved from Retell AI:', data);
+  return data;
+}
+
