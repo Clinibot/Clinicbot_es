@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, Plus, CheckCircle, XCircle, AlertCircle, Link as LinkIcon, Unlink } from 'lucide-react';
+import { ArrowLeft, Phone, Plus, CheckCircle, XCircle, AlertCircle, Link as LinkIcon, Unlink, Bug } from 'lucide-react';
 import { getClinic } from '../services/clinicService';
 import { getClinicAgents } from '../services/agentService';
 import { createPhoneRequest } from '../services/phoneRequestService';
 import { getClinicPhoneNumbers, assignPhoneToAgent, unassignPhoneFromAgent } from '../services/phoneNumberService';
+import { listRetellPhoneNumbers } from '../services/retellService';
 import { Agent, Clinic, PhoneNumber } from '../types';
 
 export default function ManagePhones() {
@@ -109,6 +110,46 @@ export default function ManagePhones() {
     }
   }
 
+  async function handleDebugRetellPhones() {
+    try {
+      console.log('🔍 Consultando números registrados en Retell AI...');
+      const retellPhones = await listRetellPhoneNumbers();
+
+      console.log('='.repeat(60));
+      console.log('📞 NÚMEROS REGISTRADOS EN RETELL AI:');
+      console.log('='.repeat(60));
+
+      if (retellPhones.length === 0) {
+        console.log('⚠️ NO tienes ningún número registrado en Retell AI');
+        alert(
+          '⚠️ NO tienes números registrados en Retell AI\n\n' +
+          'Necesitas comprar/registrar números en:\n' +
+          'https://dashboard.retellai.com/\n\n' +
+          'Ve a "Phone Numbers" y compra o importa números.'
+        );
+      } else {
+        retellPhones.forEach((phone, index) => {
+          console.log(`\n📱 Número ${index + 1}:`);
+          console.log(`   Teléfono: ${phone.phone_number}`);
+          console.log(`   Agente asignado: ${phone.agent_id || '(Sin asignar)'}`);
+          console.log(`   Estado: ${phone.status || 'N/A'}`);
+        });
+
+        console.log('\n' + '='.repeat(60));
+        console.log(`✅ Total: ${retellPhones.length} número(s) encontrado(s)`);
+        console.log('='.repeat(60));
+
+        alert(
+          `✅ Encontrados ${retellPhones.length} número(s) en Retell AI\n\n` +
+          'Revisa la consola del navegador (F12) para ver los detalles completos.'
+        );
+      }
+    } catch (error) {
+      console.error('❌ Error al consultar Retell AI:', error);
+      alert('Error al consultar Retell AI: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+    }
+  }
+
   function getAvailableAgentsForPhone(phone: PhoneNumber, agentType: 'inbound' | 'outbound'): Agent[] {
     // Get agents of the specified type that don't have this phone assigned
     return agents.filter(agent => {
@@ -177,6 +218,13 @@ export default function ManagePhones() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Teléfonos Comprados ({phoneNumbers.length})</h2>
+            <button
+              onClick={handleDebugRetellPhones}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-yellow-50 text-yellow-700 border border-yellow-300 rounded-lg hover:bg-yellow-100 transition-colors"
+            >
+              <Bug className="w-4 h-4" />
+              Verificar números en Retell AI
+            </button>
           </div>
 
           {phoneNumbers.length === 0 ? (
