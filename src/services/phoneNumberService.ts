@@ -101,49 +101,22 @@ export async function assignPhoneToAgent(
   }
 
   // Update in Retell AI
+  console.log('🔄 PASO 3: Sincronizando con Retell AI...');
+  console.log('   - Número a sincronizar:', data.phone_number);
+  console.log('   - Retell Agent ID:', agent.retell_agent_id);
+
   try {
-    // First, verify the phone number exists in Retell AI
-    console.log('Verificando que el número existe en Retell AI...');
-    const { getRetellPhoneNumber } = await import('./retellService');
-
-    try {
-      const retellPhone = await getRetellPhoneNumber(data.phone_number);
-      console.log('✓ Número encontrado en Retell AI:', retellPhone);
-    } catch (phoneError) {
-      console.error('❌ El número no existe en Retell AI:', phoneError);
-      // Rollback Supabase change
-      await supabase
-        .from('phone_numbers')
-        .update({
-          [field]: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', phoneNumberId);
-
-      throw new Error(
-        `❌ El número ${data.phone_number} NO está registrado en Retell AI.\n\n` +
-        '📋 Pasos para solucionar:\n\n' +
-        '1. Ve a tu dashboard de Retell AI: https://dashboard.retellai.com/\n' +
-        '2. Navega a la sección "Phone Numbers"\n' +
-        '3. Verifica que el número esté comprado/registrado ahí\n' +
-        '4. Si no aparece, compra o importa el número desde Retell AI primero\n' +
-        '5. Una vez que el número esté en Retell AI, vuelve aquí y asigna el agente\n\n' +
-        '⚠️ IMPORTANTE: El número debe estar comprado/registrado en Retell AI ANTES de poder asignarlo a un agente.'
-      );
-    }
-
     // Now assign the agent to the phone number
+    console.log('📞 Llamando a update-phone-number de Retell AI...');
     await assignPhoneNumberToRetellAgent(data.phone_number, agent.retell_agent_id);
     console.log('✅ Phone assigned successfully in both Supabase and Retell AI');
+    console.log('='.repeat(60));
   } catch (retellError) {
     console.error('❌ Failed to assign phone in Retell AI:', retellError);
+    console.error('Error details:', JSON.stringify(retellError, null, 2));
 
-    // If it's already our custom error, re-throw it
-    if (retellError instanceof Error && retellError.message.includes('NO está registrado en Retell AI')) {
-      throw retellError;
-    }
-
-    // Rollback Supabase change for other errors
+    // Rollback Supabase change
+    console.warn('⚠️ Haciendo rollback de la asignación en Supabase...');
     await supabase
       .from('phone_numbers')
       .update({
@@ -153,8 +126,17 @@ export async function assignPhoneToAgent(
       .eq('id', phoneNumberId);
 
     throw new Error(
-      `Error al asignar el número en Retell AI: ${retellError instanceof Error ? retellError.message : 'Error desconocido'}.\n\n` +
-      'El número NO ha sido asignado. Por favor, verifica que el número esté correctamente configurado en tu panel de Retell AI.'
+      `❌ Error al sincronizar con Retell AI\n\n` +
+      `Detalles del error: ${retellError instanceof Error ? retellError.message : JSON.stringify(retellError)}\n\n` +
+      `📋 Posibles causas:\n` +
+      `1. El número ${data.phone_number} NO está comprado/registrado en Retell AI\n` +
+      `2. La API key de Retell no tiene permisos suficientes\n` +
+      `3. Problema de conectividad con Retell AI\n\n` +
+      `🔧 Soluciones:\n` +
+      `1. Ve a https://dashboard.retellai.com/ → "Phone Numbers"\n` +
+      `2. Verifica que el número está comprado ahí\n` +
+      `3. Usa el botón "Re-sincronizar" en Gestionar Teléfonos\n\n` +
+      `⚠️ La asignación fue cancelada. El número NO ha sido asignado al agente.`
     );
   }
 
