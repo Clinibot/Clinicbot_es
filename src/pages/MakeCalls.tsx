@@ -5,6 +5,7 @@ import { getClinic } from '../services/clinicService';
 import { getClinicAgents } from '../services/agentService';
 import { createBatchCalls } from '../services/batchCallsService';
 import { getAgentPhoneNumber } from '../services/phoneNumberService';
+import { createCampaign, createCampaignExecution } from '../services/campaignService';
 import { Agent, Clinic, PhoneNumber } from '../types';
 
 interface CallRecipient {
@@ -147,12 +148,35 @@ export default function MakeCalls() {
   async function handleExecute() {
     if (!selectedAgentId || contacts.length === 0 || !clinicId || !selectedAgentPhone) return;
 
+    // Preguntar si quiere guardar como campaña
+    const saveCampaign = confirm(
+      `¿Quieres guardar esto como una campaña reutilizable?\n\n` +
+      `Si guardas como campaña, podrás:\n` +
+      `• Ver el historial de ejecuciones\n` +
+      `• Relanzarla con nuevos contactos en el futuro\n` +
+      `• Programarla para otra fecha\n\n` +
+      `¿Guardar como campaña?`
+    );
+
+    let campaignName = '';
+    let campaignDescription = '';
+
+    if (saveCampaign) {
+      campaignName = prompt('Nombre de la campaña (ej: "Recordatorio limpieza bucal"):') || '';
+      if (!campaignName.trim()) {
+        alert('❌ El nombre de la campaña es obligatorio');
+        return;
+      }
+      campaignDescription = prompt('Descripción (opcional):') || '';
+    }
+
     const confirmed = confirm(
       `¿Iniciar ${contacts.length} llamada${contacts.length > 1 ? 's' : ''}?\n\n` +
       `Agente: ${agents.find(a => a.id === selectedAgentId)?.name}\n` +
       `Número saliente: ${selectedAgentPhone.phone_number}\n` +
-      `Contactos: ${contacts.length}\n\n` +
-      `Las llamadas comenzarán inmediatamente.`
+      `Contactos: ${contacts.length}\n` +
+      (saveCampaign ? `Campaña: "${campaignName}"\n` : '') +
+      `\nLas llamadas comenzarán inmediatamente.`
     );
 
     if (!confirmed) return;
@@ -161,17 +185,40 @@ export default function MakeCalls() {
     setExecutionResult(null);
 
     try {
+      let campaignId: string | undefined;
+
+      // Si quiere guardar como campaña, crearla primero
+      if (saveCampaign && campaignName) {
+        const campaign = await createCampaign(
+          clinicId,
+          campaignName,
+          selectedAgentId,
+          campaignDescription || undefined
+        );
+        campaignId = campaign.id;
+
+        // Crear la ejecución de la campaña
+        await createCampaignExecution(campaignId, contacts);
+      }
+
+      // Ejecutar las llamadas
       await createBatchCalls(clinicId, selectedAgentId, contacts);
 
       setExecutionResult({
         success: true,
-        message: `✅ Se han programado ${contacts.length} llamada${contacts.length > 1 ? 's' : ''} correctamente`,
+        message: saveCampaign
+          ? `✅ Campaña "${campaignName}" guardada y ${contacts.length} llamada${contacts.length > 1 ? 's iniciadas' : ' iniciada'}`
+          : `✅ Se han iniciado ${contacts.length} llamada${contacts.length > 1 ? 's' : ''} correctamente`,
       });
 
       // Limpiar después de éxito
       setTimeout(() => {
         setContacts([]);
         setExecutionResult(null);
+        if (saveCampaign) {
+          // Navegar a campañas para ver la nueva campaña
+          navigate(`/clinic/${clinicId}/campaigns`);
+        }
       }, 3000);
 
     } catch (error) {
