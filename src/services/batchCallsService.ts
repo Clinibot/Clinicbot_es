@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { getAgent } from './agentService';
-import { getClinic } from './clinicService';
+import { getAgentPhoneNumber } from './phoneNumberService';
 
 interface CallRecipient {
   phone: string;
@@ -15,22 +15,22 @@ export async function createBatchCalls(
   recipients: CallRecipient[]
 ): Promise<void> {
   try {
-    // Obtener el agente y la clínica
-    const [agent, clinic] = await Promise.all([
+    // Obtener el agente y su número de teléfono asignado
+    const [agent, agentPhone] = await Promise.all([
       getAgent(agentId),
-      getClinic(clinicId)
+      getAgentPhoneNumber(agentId, 'outbound')
     ]);
 
     if (!agent || !agent.retell_agent_id) {
-      throw new Error('Agente no encontrado');
+      throw new Error('Agente no encontrado o no tiene ID de Retell configurado');
     }
 
-    if (!clinic || !clinic.phone) {
-      throw new Error('La clínica no tiene un número de teléfono configurado');
+    if (!agentPhone) {
+      throw new Error('El agente no tiene un número de teléfono asignado. Por favor, asigna un número desde Gestionar Teléfonos.');
     }
 
     const retellAgentId = agent.retell_agent_id;
-    const fromNumber = clinic.phone;
+    const fromNumber = agentPhone.phone_number;
 
     // Crear las llamadas una por una usando Retell AI
     const callPromises = recipients.map(async (recipient) => {
