@@ -243,6 +243,13 @@ export default function MakeCalls() {
               <p className="text-sm text-gray-500">{clinic?.name}</p>
             </div>
           </div>
+          <button
+            onClick={() => navigate(`/clinic/${clinicId}/campaigns`)}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium shadow-sm"
+          >
+            <Phone className="w-4 h-4" />
+            Ver Campañas
+          </button>
         </div>
 
         {/* Instrucciones simples */}
