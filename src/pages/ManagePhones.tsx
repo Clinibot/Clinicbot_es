@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, Plus, CheckCircle, XCircle, AlertCircle, Link as LinkIcon, Unlink, Bug } from 'lucide-react';
+import { ArrowLeft, Phone, Plus, CheckCircle, XCircle, AlertCircle, Link as LinkIcon, Unlink, Bug, RefreshCw } from 'lucide-react';
 import { getClinic } from '../services/clinicService';
 import { getClinicAgents } from '../services/agentService';
 import { createPhoneRequest } from '../services/phoneRequestService';
@@ -150,6 +150,77 @@ export default function ManagePhones() {
     }
   }
 
+  async function handleResyncPhones() {
+    const confirmed = confirm(
+      '🔄 Re-sincronizar con Retell AI\n\n' +
+      'Esta acción:\n' +
+      '1. Verificará todos los números asignados en tu base de datos\n' +
+      '2. Los sincronizará con Retell AI usando update-phone-number\n' +
+      '3. Corregirá cualquier desincronización\n\n' +
+      '¿Continuar?'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      console.log('🔄 Iniciando re-sincronización con Retell AI...');
+
+      const { assignPhoneNumberToRetellAgent } = await import('../services/retellService');
+      const { getAgent } = await import('../services/agentService');
+
+      let synced = 0;
+      let errors = 0;
+
+      for (const phone of phoneNumbers) {
+        // Check outbound assignment
+        if (phone.assigned_outbound_agent_id) {
+          try {
+            const agent = await getAgent(phone.assigned_outbound_agent_id);
+            if (agent?.retell_agent_id) {
+              console.log(`📞 Sincronizando ${phone.phone_number} → Agente saliente: ${agent.name}`);
+              await assignPhoneNumberToRetellAgent(phone.phone_number, agent.retell_agent_id);
+              synced++;
+            }
+          } catch (error) {
+            console.error(`❌ Error sincronizando outbound para ${phone.phone_number}:`, error);
+            errors++;
+          }
+        }
+
+        // Check inbound assignment
+        if (phone.assigned_inbound_agent_id) {
+          try {
+            const agent = await getAgent(phone.assigned_inbound_agent_id);
+            if (agent?.retell_agent_id) {
+              console.log(`📞 Sincronizando ${phone.phone_number} → Agente entrante: ${agent.name}`);
+              await assignPhoneNumberToRetellAgent(phone.phone_number, agent.retell_agent_id);
+              synced++;
+            }
+          } catch (error) {
+            console.error(`❌ Error sincronizando inbound para ${phone.phone_number}:`, error);
+            errors++;
+          }
+        }
+      }
+
+      console.log('✅ Re-sincronización completada');
+      console.log(`   Sincronizados: ${synced}`);
+      console.log(`   Errores: ${errors}`);
+
+      alert(
+        `✅ Re-sincronización completada\n\n` +
+        `Sincronizados: ${synced}\n` +
+        `Errores: ${errors}\n\n` +
+        `Revisa la consola (F12) para más detalles.`
+      );
+
+      await loadData();
+    } catch (error) {
+      console.error('❌ Error en re-sincronización:', error);
+      alert('Error en re-sincronización: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+    }
+  }
+
   function getAvailableAgentsForPhone(phone: PhoneNumber, agentType: 'inbound' | 'outbound'): Agent[] {
     // Get agents of the specified type that don't have this phone assigned
     return agents.filter(agent => {
@@ -218,13 +289,22 @@ export default function ManagePhones() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Teléfonos Comprados ({phoneNumbers.length})</h2>
-            <button
-              onClick={handleDebugRetellPhones}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-yellow-50 text-yellow-700 border border-yellow-300 rounded-lg hover:bg-yellow-100 transition-colors"
-            >
-              <Bug className="w-4 h-4" />
-              Verificar números en Retell AI
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleDebugRetellPhones}
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-yellow-50 text-yellow-700 border border-yellow-300 rounded-lg hover:bg-yellow-100 transition-colors"
+              >
+                <Bug className="w-4 h-4" />
+                Verificar
+              </button>
+              <button
+                onClick={handleResyncPhones}
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-50 text-blue-700 border border-blue-300 rounded-lg hover:bg-blue-100 transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Re-sincronizar
+              </button>
+            </div>
           </div>
 
           {phoneNumbers.length === 0 ? (
