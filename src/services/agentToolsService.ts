@@ -81,12 +81,24 @@ export async function buildAgentTools(
     }
   }
 
-  const { data: config } = await supabase
-    .from('calcom_config')
-    .select('*, calcom_event_types(*)')
-    .eq('clinic_id', clinicId)
-    .eq('enabled', true)
-    .maybeSingle();
+  // Try to load Cal.com config, but don't fail if table doesn't exist
+  let config = null;
+  try {
+    const { data, error } = await supabase
+      .from('calcom_config')
+      .select('*, calcom_event_types(*)')
+      .eq('clinic_id', clinicId)
+      .eq('enabled', true)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Cal.com config table not found or query failed:', error);
+    } else {
+      config = data;
+    }
+  } catch (err) {
+    console.warn('Error loading Cal.com config:', err);
+  }
 
   if (config && config.calcom_event_types) {
     const eventTypes = config.calcom_event_types.filter((et: any) => {

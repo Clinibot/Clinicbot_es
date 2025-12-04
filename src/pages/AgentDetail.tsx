@@ -91,28 +91,35 @@ export default function AgentDetail() {
 
         // Cargar eventos de Cal.com asignados a este agente
         try {
-          const { data: events } = await supabase
+          const { data: events, error: eventsError } = await supabase
             .from('calcom_event_types')
             .select('id, event_name, duration_minutes, description, enabled, external_event_id')
             .eq('clinic_id', data.clinic_id)
             .eq('enabled', true)
             .or(`agent_id.is.null,agent_id.eq.${agentId}`);
 
-          setCalcomEvents(events || []);
+          if (eventsError) {
+            console.warn('Cal.com events table not found or query failed:', eventsError);
+            setCalcomEvents([]);
+          } else {
+            setCalcomEvents(events || []);
+          }
 
           // Cargar config de Cal.com si existe
-          const { data: config } = await supabase
+          const { data: config, error: configError } = await supabase
             .from('calcom_config')
             .select('*')
             .eq('clinic_id', data.clinic_id)
             .maybeSingle();
 
-          // Intentar extraer username de API key o configuración
-          if (config) {
+          if (configError) {
+            console.warn('Cal.com config table not found or query failed:', configError);
+          } else if (config) {
             setCalcomUsername('cal.com'); // Placeholder
           }
         } catch (err) {
           console.error('Error loading Cal.com events:', err);
+          setCalcomEvents([]);
         }
 
         try {
@@ -188,7 +195,19 @@ export default function AgentDetail() {
       alert('Agente actualizado correctamente\n\nLas instrucciones de transferencia se han añadido automáticamente al prompt.');
     } catch (err) {
       console.error('Error detallado:', err);
-      alert('Error al guardar: ' + (err instanceof Error ? err.message : 'Error desconocido'));
+      console.error('Error type:', typeof err);
+      console.error('Error keys:', err ? Object.keys(err) : 'null');
+
+      let errorMessage = 'Error desconocido';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && typeof err === 'object') {
+        errorMessage = JSON.stringify(err, null, 2);
+      }
+
+      alert('Error al guardar el agente:\n\n' + errorMessage + '\n\nRevisa la consola del navegador (F12) para más detalles.');
     } finally {
       setSaving(false);
     }
