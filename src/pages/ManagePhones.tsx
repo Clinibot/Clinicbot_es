@@ -178,7 +178,7 @@ export default function ManagePhones() {
             const agent = await getAgent(phone.assigned_outbound_agent_id);
             if (agent?.retell_agent_id) {
               console.log(`📞 Sincronizando ${phone.phone_number} → Agente saliente: ${agent.name}`);
-              await assignPhoneNumberToRetellAgent(phone.phone_number, agent.retell_agent_id);
+              await assignPhoneNumberToRetellAgent(phone.phone_number, agent.retell_agent_id, 'outbound');
               synced++;
             }
           } catch (error) {
@@ -193,7 +193,7 @@ export default function ManagePhones() {
             const agent = await getAgent(phone.assigned_inbound_agent_id);
             if (agent?.retell_agent_id) {
               console.log(`📞 Sincronizando ${phone.phone_number} → Agente entrante: ${agent.name}`);
-              await assignPhoneNumberToRetellAgent(phone.phone_number, agent.retell_agent_id);
+              await assignPhoneNumberToRetellAgent(phone.phone_number, agent.retell_agent_id, 'inbound');
               synced++;
             }
           } catch (error) {

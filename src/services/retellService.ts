@@ -530,19 +530,28 @@ export async function getRetellAgent(agentId: string): Promise<any> {
  * Assign a phone number to an agent in Retell AI
  * @param phoneNumber The phone number (e.g., "+34612345678")
  * @param agentId The Retell agent ID
+ * @param agentType The type of agent ('inbound' or 'outbound')
  * @returns The updated phone number configuration
  */
 export async function assignPhoneNumberToRetellAgent(
   phoneNumber: string,
-  agentId: string
+  agentId: string,
+  agentType: 'inbound' | 'outbound' = 'outbound'
 ): Promise<any> {
   console.log('╔═══════════════════════════════════════════════════════════╗');
   console.log('║  🔄 ACTUALIZANDO NÚMERO EN RETELL AI                      ║');
   console.log('╚═══════════════════════════════════════════════════════════╝');
   console.log('📞 Phone Number:', phoneNumber);
   console.log('🤖 Agent ID:', agentId);
+  console.log('📍 Agent Type:', agentType);
   console.log('🌐 Endpoint:', `https://api.retellai.com/update-phone-number/${encodeURIComponent(phoneNumber)}`);
-  console.log('📤 Payload:', JSON.stringify({ agent_id: agentId }, null, 2));
+
+  // Retell AI uses different parameters for inbound vs outbound
+  const payload = agentType === 'inbound'
+    ? { inbound_agent_id: agentId }
+    : { outbound_agent_id: agentId };
+
+  console.log('📤 Payload:', JSON.stringify(payload, null, 2));
 
   const response = await fetch(`https://api.retellai.com/update-phone-number/${encodeURIComponent(phoneNumber)}`, {
     method: 'PATCH',
@@ -550,9 +559,7 @@ export async function assignPhoneNumberToRetellAgent(
       'Authorization': `Bearer ${RETELL_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      agent_id: agentId,
-    }),
+    body: JSON.stringify(payload),
   });
 
   console.log('📥 Response Status:', response.status, response.statusText);

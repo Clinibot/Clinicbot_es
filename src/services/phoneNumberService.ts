@@ -104,11 +104,12 @@ export async function assignPhoneToAgent(
   console.log('🔄 PASO 3: Sincronizando con Retell AI...');
   console.log('   - Número a sincronizar:', data.phone_number);
   console.log('   - Retell Agent ID:', agent.retell_agent_id);
+  console.log('   - Tipo de agente:', agentType);
 
   try {
     // Now assign the agent to the phone number
     console.log('📞 Llamando a update-phone-number de Retell AI...');
-    await assignPhoneNumberToRetellAgent(data.phone_number, agent.retell_agent_id);
+    await assignPhoneNumberToRetellAgent(data.phone_number, agent.retell_agent_id, agentType);
     console.log('✅ Phone assigned successfully in both Supabase and Retell AI');
     console.log('='.repeat(60));
   } catch (retellError) {
