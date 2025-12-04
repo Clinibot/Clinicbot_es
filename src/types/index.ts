@@ -83,3 +83,36 @@ export interface ScrapedClinicInfo {
   phone?: string;
   additional_info?: string;
 }
+
+export interface CallRecipient {
+  phone: string;
+  name?: string;
+  call_status?: 'pending' | 'calling' | 'completed' | 'failed';
+  call_id?: string;
+  call_result?: string;
+}
+
+export interface Campaign {
+  id: string;
+  clinic_id: string;
+  agent_id: string;
+  name: string;
+  description?: string;
+  scheduled_for: string; // ISO datetime
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  recipients: CallRecipient[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PhoneRequest {
+  id: string;
+  clinic_id: string;
+  user_id: string;
+  status: 'pending' | 'approved' | 'rejected';
+  phone_number?: string;
+  request_notes?: string;
+  admin_notes?: string;
+  created_at: string;
+  updated_at: string;
+}

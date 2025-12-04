@@ -12,6 +12,7 @@ import Analytics from './pages/Analytics';
 import ManageCalcom from './pages/ManageCalcom';
 import ManagePhones from './pages/ManagePhones';
 import MakeCalls from './pages/MakeCalls';
+import AdminPanel from './pages/AdminPanel';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -143,6 +144,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MakeCalls />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminPanel />
               </ProtectedRoute>
             }
           />

@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, LogOut, Zap } from 'lucide-react';
+import { Plus, LogOut, Zap, Shield } from 'lucide-react';
 import { signOut } from '../services/authService';
 import { getUserClinics } from '../services/clinicService';
+import { supabase } from '../lib/supabase';
 import { Clinic } from '../types';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     loadClinics();
+    checkAdmin();
   }, []);
 
   async function loadClinics() {
@@ -22,6 +25,17 @@ export default function Dashboard() {
       console.error('Error loading clinics:', err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function checkAdmin() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email === 'sonia@sonia.com') {
+        setIsAdmin(true);
+      }
+    } catch (err) {
+      console.error('Error checking admin:', err);
     }
   }
 
@@ -40,10 +54,21 @@ export default function Dashboard() {
             </div>
             <span className="text-xl font-bold text-gray-900">ClinicBot</span>
           </div>
-          <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors">
-            <LogOut className="w-4 h-4" />
-            Salir
-          </button>
+          <div className="flex items-center gap-3">
+            {isAdmin && (
+              <button
+                onClick={() => navigate('/admin')}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-900 font-semibold rounded-lg border-2 border-blue-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow hover:shadow-md"
+              >
+                <Shield className="w-4 h-4" />
+                Admin
+              </button>
+            )}
+            <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors">
+              <LogOut className="w-4 h-4" />
+              Salir
+            </button>
+          </div>
         </div>
       </nav>
 

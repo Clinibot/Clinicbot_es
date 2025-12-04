@@ -1,43 +1,124 @@
-interface PhoneRequest {
-  clinicId: string;
-  clinicName: string;
-  agentId: string;
-  agentName: string;
-  country: string;
+import { supabase } from '../lib/supabase';
+import { PhoneRequest } from '../types';
+
+export async function createPhoneRequest(
+  clinicId: string,
+  requestNotes?: string
+): Promise<PhoneRequest> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { data, error } = await supabase
+    .from('phone_requests')
+    .insert([{
+      clinic_id: clinicId,
+      user_id: user.id,
+      status: 'pending',
+      request_notes: requestNotes,
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
-const WEBHOOK_URL = 'https://telvia.app.n8n.cloud/webhook/f777f425-092a-4858-b24d-173246cfe77d';
+export async function getPhoneRequest(requestId: string): Promise<PhoneRequest | null> {
+  const { data, error } = await supabase
+    .from('phone_requests')
+    .select('*')
+    .eq('id', requestId)
+    .maybeSingle();
 
-export async function requestPhoneNumber(request: PhoneRequest): Promise<void> {
-  try {
-    const response = await fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        type: 'phone_number_request',
-        timestamp: new Date().toISOString(),
-        clinic: {
-          id: request.clinicId,
-          name: request.clinicName,
-        },
-        agent: {
-          id: request.agentId,
-          name: request.agentName,
-        },
-        country: request.country,
-        pricing: request.country === 'España' ? '5€/mes' : 'Consultar',
-      }),
-    });
+  if (error) throw error;
+  return data;
+}
 
-    if (!response.ok) {
-      throw new Error(`Error al enviar solicitud: ${response.status} ${response.statusText}`);
-    }
+export async function getAllPhoneRequests(): Promise<PhoneRequest[]> {
+  const { data, error } = await supabase
+    .from('phone_requests')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-    return;
-  } catch (error) {
-    console.error('Error requesting phone number:', error);
-    throw error;
-  }
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getPendingPhoneRequests(): Promise<PhoneRequest[]> {
+  const { data, error } = await supabase
+    .from('phone_requests')
+    .select('*')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getClinicPhoneRequests(clinicId: string): Promise<PhoneRequest[]> {
+  const { data, error } = await supabase
+    .from('phone_requests')
+    .select('*')
+    .eq('clinic_id', clinicId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function approvePhoneRequest(
+  requestId: string,
+  phoneNumber: string,
+  adminNotes?: string
+): Promise<PhoneRequest> {
+  const { data, error } = await supabase
+    .from('phone_requests')
+    .update({
+      status: 'approved',
+      phone_number: phoneNumber,
+      admin_notes: adminNotes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', requestId)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  // Update the clinic's phone number
+  const request = data as PhoneRequest;
+  await supabase
+    .from('clinics')
+    .update({ phone: phoneNumber })
+    .eq('id', request.clinic_id);
+
+  return data;
+}
+
+export async function rejectPhoneRequest(
+  requestId: string,
+  adminNotes?: string
+): Promise<PhoneRequest> {
+  const { data, error } = await supabase
+    .from('phone_requests')
+    .update({
+      status: 'rejected',
+      admin_notes: adminNotes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', requestId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deletePhoneRequest(requestId: string): Promise<void> {
+  const { error } = await supabase
+    .from('phone_requests')
+    .delete()
+    .eq('id', requestId);
+
+  if (error) throw error;
 }
