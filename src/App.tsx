@@ -12,6 +12,7 @@ import Analytics from './pages/Analytics';
 import ManageCalcom from './pages/ManageCalcom';
 import ManagePhones from './pages/ManagePhones';
 import MakeCalls from './pages/MakeCalls';
+import Campaigns from './pages/Campaigns';
 import AdminPanel from './pages/AdminPanel';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -144,6 +145,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MakeCalls />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clinic/:clinicId/campaigns"
+            element={
+              <ProtectedRoute>
+                <Campaigns />
               </ProtectedRoute>
             }
           />
