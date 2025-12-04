@@ -107,31 +107,31 @@ export default function ClinicDetail() {
                   </div>
                 </div>
               )}
-              <div className="mt-6 space-y-2">
+              <div className="mt-6 space-y-3">
                 <button
                   onClick={() => navigate(`/clinic/${clinicId}/calcom`)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 text-gray-900 font-semibold rounded-lg border-2 border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow hover:shadow-md active:shadow-inner"
                 >
                   <Calendar className="w-4 h-4" />
                   Configurar Cal.com
                 </button>
                 <button
                   onClick={() => navigate(`/clinic/${clinicId}/analytics`)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 text-gray-900 font-semibold rounded-lg border-2 border-blue-300 hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all shadow hover:shadow-md active:shadow-inner"
                 >
                   <BarChart3 className="w-4 h-4" />
                   Ver Analíticas
                 </button>
                 <button
                   onClick={() => navigate(`/clinic/${clinicId}/phones`)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 text-gray-900 font-semibold rounded-lg border-2 border-blue-400 hover:bg-blue-400 hover:text-white hover:border-blue-400 transition-all shadow hover:shadow-md active:shadow-inner"
                 >
                   <Phone className="w-4 h-4" />
                   Gestionar Teléfonos
                 </button>
                 <button
                   onClick={() => navigate(`/clinic/${clinicId}/calls`)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 text-gray-900 font-semibold rounded-lg border-2 border-blue-600 hover:bg-blue-700 hover:text-white hover:border-blue-700 transition-all shadow hover:shadow-md active:shadow-inner"
                 >
                   <Phone className="w-4 h-4" />
                   Hacer Llamadas
@@ -145,7 +145,7 @@ export default function ClinicDetail() {
               <h2 className="text-xl font-semibold text-gray-900">Agentes IA</h2>
               <button
                 onClick={() => navigate(`/clinic/${clinicId}/create-agent`)}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 bg-gray-50 text-gray-900 font-semibold px-5 py-2.5 rounded-lg border-2 border-blue-500 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow hover:shadow-md"
               >
                 <Plus className="w-4 h-4" />
                 Crear Agente
@@ -161,7 +161,7 @@ export default function ClinicDetail() {
                 <p className="text-sm text-gray-500 mb-4">Crea tu primer agente IA para comenzar</p>
                 <button
                   onClick={() => navigate(`/clinic/${clinicId}/create-agent`)}
-                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center gap-2 bg-gray-50 text-gray-900 font-semibold px-6 py-3 rounded-lg border-2 border-blue-500 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow hover:shadow-md"
                 >
                   <Plus className="w-4 h-4" />
                   Crear Agente
