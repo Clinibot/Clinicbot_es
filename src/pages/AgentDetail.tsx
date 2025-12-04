@@ -29,7 +29,7 @@ export default function AgentDetail() {
   const { clinicId, agentId } = useParams();
   const navigate = useNavigate();
   const [agent, setAgent] = useState<Agent | null>(null);
-  const [activeTab, setActiveTab] = useState<'config' | 'playground' | 'transfers'>('config');
+  const [activeTab, setActiveTab] = useState<'config' | 'playground' | 'transfers' | 'metrics' | 'connections'>('config');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPromptEditor, setShowPromptEditor] = useState(false);
@@ -336,12 +336,34 @@ export default function AgentDetail() {
             onClick={() => setActiveTab('transfers')}
             className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
               activeTab === 'transfers'
-                ? 'bg-white text-blue-600 shadow-md border-2 border-purple-600'
+                ? 'bg-white text-blue-600 shadow-md border-2 border-blue-600'
                 : 'bg-white text-gray-600 border-2 border-transparent hover:border-gray-300'
             }`}
           >
             <Phone className="w-5 h-5" />
             Transferencias
+          </button>
+          <button
+            onClick={() => setActiveTab('metrics')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+              activeTab === 'metrics'
+                ? 'bg-white text-blue-600 shadow-md border-2 border-blue-600'
+                : 'bg-white text-gray-600 border-2 border-transparent hover:border-gray-300'
+            }`}
+          >
+            <Target className="w-5 h-5" />
+            Métricas de Éxito
+          </button>
+          <button
+            onClick={() => setActiveTab('connections')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+              activeTab === 'connections'
+                ? 'bg-white text-blue-600 shadow-md border-2 border-blue-600'
+                : 'bg-white text-gray-600 border-2 border-transparent hover:border-gray-300'
+            }`}
+          >
+            <Globe className="w-5 h-5" />
+            Conexiones
           </button>
         </div>
 
@@ -402,320 +424,6 @@ export default function AgentDetail() {
                       </span>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      Métricas de Éxito
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Define qué hace que una llamada sea exitosa
-                    </p>
-                  </div>
-                  <button
-                    onClick={addSuccessMetric}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Agregar
-                  </button>
-                </div>
-
-                {successMetrics.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
-                    <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p className="text-sm font-medium">No hay métricas de éxito configuradas</p>
-                    <p className="text-xs mt-1">Agrega métricas para medir el éxito de las llamadas</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {successMetrics.map((metric, index) => (
-                      <div key={metric.id} className="border border-gray-200 rounded-lg p-4 relative hover:border-blue-300 transition-colors">
-                        <button
-                          onClick={() => removeSuccessMetric(index)}
-                          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 hover:bg-gray-50 p-1.5 rounded-lg transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-
-                        <div className="space-y-3 pr-10">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Nombre de la Métrica
-                              </label>
-                              <input
-                                type="text"
-                                value={metric.name}
-                                onChange={(e) => updateSuccessMetric(index, { name: e.target.value })}
-                                placeholder="Cita agendada"
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Tipo de Métrica
-                              </label>
-                              <select
-                                value={metric.type}
-                                onChange={(e) => updateSuccessMetric(index, {
-                                  type: e.target.value as 'boolean' | 'duration' | 'text',
-                                  custom_data_key: undefined,
-                                  min_duration: undefined,
-                                  expected_value: undefined
-                                })}
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              >
-                                <option value="boolean">Booleano (Sí/No)</option>
-                                <option value="duration">Duración Mínima</option>
-                                <option value="text">Valor de Texto</option>
-                              </select>
-                            </div>
-                          </div>
-
-                          {metric.type === 'boolean' && (
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Clave en Custom Data
-                              </label>
-                              <input
-                                type="text"
-                                value={metric.custom_data_key || ''}
-                                onChange={(e) => updateSuccessMetric(index, { custom_data_key: e.target.value })}
-                                placeholder="appointment_booked"
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                              <p className="text-xs text-gray-500 mt-1">
-                                Se considerará exitosa si este campo es true en custom_data
-                              </p>
-                            </div>
-                          )}
-
-                          {metric.type === 'duration' && (
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Duración Mínima (segundos)
-                              </label>
-                              <input
-                                type="number"
-                                value={metric.min_duration || ''}
-                                onChange={(e) => updateSuccessMetric(index, { min_duration: parseInt(e.target.value) || 0 })}
-                                placeholder="60"
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                              <p className="text-xs text-gray-500 mt-1">
-                                Se considerará exitosa si la llamada dura al menos este tiempo
-                              </p>
-                            </div>
-                          )}
-
-                          {metric.type === 'text' && (
-                            <div className="space-y-3">
-                              <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">
-                                  Clave en Custom Data
-                                </label>
-                                <input
-                                  type="text"
-                                  value={metric.custom_data_key || ''}
-                                  onChange={(e) => updateSuccessMetric(index, { custom_data_key: e.target.value })}
-                                  placeholder="appointment_status"
-                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">
-                                  Valor Esperado
-                                </label>
-                                <input
-                                  type="text"
-                                  value={metric.expected_value || ''}
-                                  onChange={(e) => updateSuccessMetric(index, { expected_value: e.target.value })}
-                                  placeholder="confirmed"
-                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">
-                                  Se considerará exitosa si este campo tiene exactamente este valor
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-700">
-                  <p className="font-medium mb-1">Cómo funcionan las métricas:</p>
-                  <ul className="list-disc list-inside space-y-1 text-gray-600">
-                    <li><strong>Boolean (Sí/No):</strong> Se considera exitosa si el campo en custom_data es true</li>
-                    <li><strong>Duración:</strong> Se considera exitosa si la llamada dura más del tiempo especificado</li>
-                    <li><strong>Texto:</strong> Se considera exitosa si el campo custom_data contiene el valor esperado</li>
-                    <li><strong>Analytics:</strong> Podrás ver la tasa de éxito basada en estas métricas en la página de Analytics</li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Sección de Custom Functions */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      Conexiones Externas
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Conecta con CRM, calendarios u otros servicios
-                    </p>
-                  </div>
-                  <button
-                    onClick={addCustomFunction}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Nueva Conexión
-                  </button>
-                </div>
-
-                {customFunctions.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-sm font-medium text-gray-600">No hay conexiones configuradas</p>
-                    <p className="text-xs text-gray-500 mt-1">Conecta tu agente con CRM, calendarios u otros servicios</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {customFunctions.map((func, index) => (
-                      <div key={func.id} className="border border-gray-200 rounded-lg p-5 relative hover:border-blue-300 transition-all bg-white">
-                        <button
-                          onClick={() => removeCustomFunction(index)}
-                          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 hover:bg-gray-50 p-1.5 rounded-lg transition-colors"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-
-                        <div className="space-y-4 pr-10">
-                          {/* Nombre y Estado */}
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                
-                                Nombre para Mostrar
-                              </label>
-                              <input
-                                type="text"
-                                value={func.display_name}
-                                onChange={(e) => updateCustomFunction(index, { display_name: e.target.value })}
-                                placeholder="Agendar Cita en CRM"
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">
-                                
-                                Nombre de la Función
-                              </label>
-                              <input
-                                type="text"
-                                value={func.name}
-                                onChange={(e) => updateCustomFunction(index, { name: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
-                                placeholder="agendar_cita"
-                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                              />
-                              <p className="text-xs text-gray-500 mt-1">
-                                Sin espacios, solo letras minúsculas y guiones bajos
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Descripción */}
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                              Descripción (qué hace y qué parámetros recibe)
-                            </label>
-                            <textarea
-                              value={func.description}
-                              onChange={(e) => updateCustomFunction(index, { description: e.target.value })}
-                              placeholder="Esta función agenda una cita en el CRM. Recibe: nombre_paciente (string), telefono (string), fecha_preferida (string)"
-                              rows={3}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                          </div>
-
-                          {/* URL del Webhook */}
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                              
-                              URL del Webhook
-                            </label>
-                            <input
-                              type="url"
-                              value={func.webhook_url}
-                              onChange={(e) => updateCustomFunction(index, { webhook_url: e.target.value })}
-                              placeholder="https://tu-crm.com/api/webhook"
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                            />
-                          </div>
-
-                          {/* API Key / Contraseña */}
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                              
-                              Contraseña o API Key (opcional)
-                            </label>
-                            <div className="relative">
-                              <input
-                                type={showApiKeys[func.id] ? 'text' : 'password'}
-                                value={func.api_key}
-                                onChange={(e) => updateCustomFunction(index, { api_key: e.target.value })}
-                                placeholder="sk_tu_api_key_secreta"
-                                className="w-full px-3 py-2 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => toggleApiKeyVisibility(func.id)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1"
-                              >
-                                {showApiKeys[func.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                              </button>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              Se enviará en el header Authorization: Bearer [tu_api_key]
-                            </p>
-                          </div>
-
-                          {/* Estado Activo/Inactivo */}
-                          <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                            <input
-                              type="checkbox"
-                              id={`enabled-${func.id}`}
-                              checked={func.enabled}
-                              onChange={(e) => updateCustomFunction(index, { enabled: e.target.checked })}
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <label htmlFor={`enabled-${func.id}`} className="text-sm font-medium text-gray-700 cursor-pointer">
-                              {func.enabled ? 'Activa' : 'Desactivada'}
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="mt-4 bg-slate-50 border border-blue-200 rounded-lg p-4 text-xs text-slate-800">
-                  <p className="font-medium mb-2">Cómo funciona:</p>
-                  <ul className="list-disc list-inside space-y-1.5 text-blue-600">
-                    <li><strong>Súper fácil:</strong> Solo necesitas poner el nombre, la URL de tu webhook y listo</li>
-                    <li><strong>Automático:</strong> El agente ejecutará esta función cuando sea necesario durante la llamada</li>
-                    <li><strong>Datos enviados:</strong> Tu webhook recibirá los parámetros que describas en formato JSON</li>
-                    <li><strong>Seguro:</strong> La API Key se envía en cada petición para autenticarte</li>
-                    <li><strong>Prompt automático:</strong> Se añade automáticamente al prompt del agente - ¡no necesitas editarlo!</li>
-                  </ul>
                 </div>
               </div>
 
@@ -1037,6 +745,315 @@ export default function AgentDetail() {
                 <li><strong>Nombre claro:</strong> El agente usará el nombre que pongas para ejecutar la transferencia (ej: "Dr. García", "Urgencias", "Especialista en Pediatría")</li>
                 <li><strong>Formato del número:</strong> Para transferencias telefónicas, incluye siempre el código de país completo (ej: +34 600 123 456)</li>
                 <li><strong>Prompt automático:</strong> Se añade automáticamente una sección "#transferencias" al prompt con las instrucciones - ¡no necesitas editarlo manualmente!</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'metrics' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Métricas de Éxito
+                </h2>
+                <p className="text-gray-600 mt-1">
+                  Define qué hace que una llamada sea exitosa
+                </p>
+              </div>
+              <button
+                onClick={addSuccessMetric}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Agregar Métrica
+              </button>
+            </div>
+
+            {successMetrics.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+                <Target className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium">No hay métricas de éxito configuradas</p>
+                <p className="text-sm mt-2">Agrega métricas para medir el éxito de las llamadas</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {successMetrics.map((metric, index) => (
+                  <div key={metric.id} className="border border-gray-200 rounded-lg p-6 relative hover:border-blue-300 transition-colors">
+                    <button
+                      onClick={() => removeSuccessMetric(index)}
+                      className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+
+                    <div className="space-y-4 pr-12">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre de la Métrica
+                          </label>
+                          <input
+                            type="text"
+                            value={metric.name}
+                            onChange={(e) => updateSuccessMetric(index, { name: e.target.value })}
+                            placeholder="Cita agendada"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Tipo de Métrica
+                          </label>
+                          <select
+                            value={metric.type}
+                            onChange={(e) => updateSuccessMetric(index, {
+                              type: e.target.value as 'boolean' | 'duration' | 'text',
+                              custom_data_key: undefined,
+                              min_duration: undefined,
+                              expected_value: undefined
+                            })}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="boolean">Booleano (Sí/No)</option>
+                            <option value="duration">Duración Mínima</option>
+                            <option value="text">Valor de Texto</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {metric.type === 'boolean' && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Clave en Custom Data
+                          </label>
+                          <input
+                            type="text"
+                            value={metric.custom_data_key || ''}
+                            onChange={(e) => updateSuccessMetric(index, { custom_data_key: e.target.value })}
+                            placeholder="appointment_booked"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <p className="text-sm text-gray-500 mt-2">
+                            Se considerará exitosa si este campo es true en custom_data
+                          </p>
+                        </div>
+                      )}
+
+                      {metric.type === 'duration' && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Duración Mínima (segundos)
+                          </label>
+                          <input
+                            type="number"
+                            value={metric.min_duration || ''}
+                            onChange={(e) => updateSuccessMetric(index, { min_duration: parseInt(e.target.value) || 0 })}
+                            placeholder="60"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <p className="text-sm text-gray-500 mt-2">
+                            Se considerará exitosa si la llamada dura al menos este tiempo
+                          </p>
+                        </div>
+                      )}
+
+                      {metric.type === 'text' && (
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Clave en Custom Data
+                            </label>
+                            <input
+                              type="text"
+                              value={metric.custom_data_key || ''}
+                              onChange={(e) => updateSuccessMetric(index, { custom_data_key: e.target.value })}
+                              placeholder="appointment_status"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Valor Esperado
+                            </label>
+                            <input
+                              type="text"
+                              value={metric.expected_value || ''}
+                              onChange={(e) => updateSuccessMetric(index, { expected_value: e.target.value })}
+                              placeholder="confirmed"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <p className="text-sm text-gray-500 mt-2">
+                              Se considerará exitosa si este campo tiene exactamente este valor
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700">
+              <p className="font-medium mb-2">Cómo funcionan las métricas:</p>
+              <ul className="list-disc list-inside space-y-1 text-gray-600">
+                <li><strong>Boolean (Sí/No):</strong> Se considera exitosa si el campo en custom_data es true</li>
+                <li><strong>Duración:</strong> Se considera exitosa si la llamada dura más del tiempo especificado</li>
+                <li><strong>Texto:</strong> Se considera exitosa si el campo custom_data contiene el valor esperado</li>
+                <li><strong>Analytics:</strong> Podrás ver la tasa de éxito basada en estas métricas en la página de Analytics</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'connections' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Conexiones Externas
+                </h2>
+                <p className="text-gray-600 mt-1">
+                  Conecta con CRM, calendarios u otros servicios
+                </p>
+              </div>
+              <button
+                onClick={addCustomFunction}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Nueva Conexión
+              </button>
+            </div>
+
+            {customFunctions.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+                <Globe className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium text-gray-600">No hay conexiones configuradas</p>
+                <p className="text-sm text-gray-500 mt-2">Conecta tu agente con CRM, calendarios u otros servicios</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {customFunctions.map((func, index) => (
+                  <div key={func.id} className="border border-gray-200 rounded-lg p-6 relative hover:border-blue-300 transition-all bg-white">
+                    <button
+                      onClick={() => removeCustomFunction(index)}
+                      className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+
+                    <div className="space-y-4 pr-12">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre para Mostrar
+                          </label>
+                          <input
+                            type="text"
+                            value={func.display_name}
+                            onChange={(e) => updateCustomFunction(index, { display_name: e.target.value })}
+                            placeholder="Agendar Cita en CRM"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre de la Función
+                          </label>
+                          <input
+                            type="text"
+                            value={func.name}
+                            onChange={(e) => updateCustomFunction(index, { name: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
+                            placeholder="agendar_cita"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Sin espacios, solo letras minúsculas y guiones bajos
+                          </p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Descripción (qué hace y qué parámetros recibe)
+                        </label>
+                        <textarea
+                          value={func.description}
+                          onChange={(e) => updateCustomFunction(index, { description: e.target.value })}
+                          placeholder="Esta función agenda una cita en el CRM. Recibe: nombre_paciente (string), telefono (string), fecha_preferida (string)"
+                          rows={3}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          URL del Webhook
+                        </label>
+                        <input
+                          type="url"
+                          value={func.webhook_url}
+                          onChange={(e) => updateCustomFunction(index, { webhook_url: e.target.value })}
+                          placeholder="https://tu-crm.com/api/webhook"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Contraseña o API Key (opcional)
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showApiKeys[func.id] ? 'text' : 'password'}
+                            value={func.api_key}
+                            onChange={(e) => updateCustomFunction(index, { api_key: e.target.value })}
+                            placeholder="sk_tu_api_key_secreta"
+                            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => toggleApiKeyVisibility(func.id)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1"
+                          >
+                            {showApiKeys[func.id] ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Se enviará en el header Authorization: Bearer [tu_api_key]
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+                        <input
+                          type="checkbox"
+                          id={`enabled-${func.id}`}
+                          checked={func.enabled}
+                          onChange={(e) => updateCustomFunction(index, { enabled: e.target.checked })}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor={`enabled-${func.id}`} className="text-sm font-medium text-gray-700 cursor-pointer">
+                          {func.enabled ? 'Activa' : 'Desactivada'}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-gray-800">
+              <p className="font-medium mb-2">Cómo funciona:</p>
+              <ul className="list-disc list-inside space-y-1.5 text-gray-600">
+                <li><strong>Súper fácil:</strong> Solo necesitas poner el nombre, la URL de tu webhook y listo</li>
+                <li><strong>Automático:</strong> El agente ejecutará esta función cuando sea necesario durante la llamada</li>
+                <li><strong>Datos enviados:</strong> Tu webhook recibirá los parámetros que describas en formato JSON</li>
+                <li><strong>Seguro:</strong> La API Key se envía en cada petición para autenticarte</li>
+                <li><strong>Prompt automático:</strong> Se añade automáticamente al prompt del agente - ¡no necesitas editarlo!</li>
               </ul>
             </div>
           </div>
