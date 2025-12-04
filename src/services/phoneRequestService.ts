@@ -5,7 +5,7 @@ import { getAgent } from './agentService';
 
 export async function createPhoneRequest(
   clinicId: string,
-  agentId: string,
+  agentId: string | null | undefined,
   requestNotes?: string
 ): Promise<PhoneRequest> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -16,7 +16,7 @@ export async function createPhoneRequest(
     .insert([{
       clinic_id: clinicId,
       user_id: user.id,
-      agent_id: agentId,
+      agent_id: agentId || null,
       user_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario',
       user_email: user.email,
       status: 'pending',
@@ -79,24 +79,18 @@ export async function approvePhoneRequest(
   monthlyCost: number,
   adminNotes?: string
 ): Promise<PhoneRequest> {
-  // First, get the request to get clinic_id and agent_id
+  // First, get the request to get clinic_id
   const request = await getPhoneRequest(requestId);
   if (!request) throw new Error('Phone request not found');
 
-  // Get agent info to know the type
-  const agent = request.agent_id ? await getAgent(request.agent_id) : null;
-  if (!agent) throw new Error('Agent not found for this request');
-
-  // Create the phone number record
-  const phoneNumberRecord = await createPhoneNumber(
+  // Create the phone number record WITHOUT assigning to any agent
+  // The user will assign it later from ManagePhones page
+  await createPhoneNumber(
     request.clinic_id,
     phoneNumber,
     country,
     monthlyCost
   );
-
-  // Assign the phone to the specific agent
-  await assignPhoneToAgent(phoneNumberRecord.id, agent.id, agent.agent_type);
 
   // Update the request status
   const { data, error } = await supabase
