@@ -133,3 +133,44 @@ export interface PhoneNumber {
   created_at: string;
   updated_at: string;
 }
+
+export interface Campaign {
+  id: string;
+  clinic_id: string;
+  name: string;
+  description?: string;
+  agent_id: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  agent?: Agent; // Populated via join
+  executions?: CampaignExecution[]; // Populated via join
+}
+
+export interface CampaignExecution {
+  id: string;
+  campaign_id: string;
+  scheduled_for?: string; // ISO datetime - null means immediate
+  executed_at?: string; // ISO datetime - when it actually ran
+  status: 'pending' | 'scheduled' | 'executing' | 'completed' | 'failed';
+  total_contacts: number;
+  successful_calls: number;
+  failed_calls: number;
+  created_at: string;
+  updated_at: string;
+  campaign?: Campaign; // Populated via join
+  contacts?: CampaignContact[]; // Populated via join
+}
+
+export interface CampaignContact {
+  id: string;
+  campaign_execution_id: string;
+  phone: string;
+  name?: string;
+  retell_call_id?: string;
+  status: 'pending' | 'calling' | 'completed' | 'failed';
+  call_duration?: number; // in seconds
+  error_message?: string;
+  created_at: string;
+  updated_at: string;
+}
