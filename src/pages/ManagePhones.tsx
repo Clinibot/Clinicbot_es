@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Phone, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { getClinic } from '../services/clinicService';
 import { getClinicAgents } from '../services/agentService';
-import { requestPhoneNumber } from '../services/phoneRequestService';
+import { createPhoneRequest } from '../services/phoneRequestService';
 import { Agent, Clinic } from '../types';
 
 export default function ManagePhones() {
@@ -47,18 +47,14 @@ export default function ManagePhones() {
     setRequestingFor(agent.id);
 
     try {
-      await requestPhoneNumber({
-        clinicId,
-        clinicName: clinic.name,
-        agentId: agent.id,
-        agentName: agent.name,
-        country,
-      });
+      const requestNotes = `Solicitud de número virtual de ${country} para el agente "${agent.name}" (ID: ${agent.id})`;
+
+      await createPhoneRequest(clinicId, requestNotes);
 
       alert(
         `✅ Solicitud enviada correctamente\n\n` +
         `Se ha solicitado un número virtual de ${country} para "${agent.name}".\n` +
-        `Recibirás una confirmación pronto.`
+        `El administrador revisará tu solicitud pronto.`
       );
     } catch (error) {
       alert('Error al solicitar número: ' + (error instanceof Error ? error.message : 'Error desconocido'));
@@ -127,7 +123,8 @@ export default function ManagePhones() {
             <li>Selecciona el agente para el que quieres solicitar un número</li>
             <li>Elige el país del número virtual</li>
             <li>Confirma la solicitud</li>
-            <li>Recibirás el número asignado por correo electrónico</li>
+            <li>El administrador revisará y aprobará tu solicitud</li>
+            <li>El número será asignado automáticamente a tu clínica</li>
           </ol>
         </div>
 
@@ -212,8 +209,8 @@ export default function ManagePhones() {
         {/* Nota adicional */}
         <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
           <p className="text-xs text-gray-600">
-            <strong>Nota:</strong> Una vez confirmada la solicitud, nos pondremos en contacto contigo para
-            completar la configuración del número virtual. Los números virtuales se activan en un plazo de 24-48 horas.
+            <strong>Nota:</strong> Tu solicitud será revisada por el administrador. Una vez aprobada,
+            el número virtual será asignado a tu clínica y se activará en un plazo de 24-48 horas.
           </p>
         </div>
       </div>
