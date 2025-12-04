@@ -11,13 +11,17 @@ type DateFilter = 'today' | 'week' | 'month' | 'custom' | 'all';
 type GroupBy = 'day' | 'week' | 'month';
 
 const COLORS = {
-  positive: '#64748b',
-  negative: '#94a3b8',
-  neutral: '#cbd5e1',
-  completed: '#64748b',
-  missed: '#cbd5e1',
-  primary: '#0f172a',
-  secondary: '#475569',
+  positive: '#3b82f6',  // Blue
+  negative: '#f43f5e',  // Rose
+  neutral: '#94a3b8',   // Slate
+  completed: '#3b82f6', // Blue
+  missed: '#f59e0b',    // Amber
+  primary: '#1e40af',   // Blue-800
+  secondary: '#3b82f6', // Blue-500
+  chart1: '#3b82f6',    // Blue
+  chart2: '#06b6d4',    // Cyan
+  chart3: '#8b5cf6',    // Violet
+  chart4: '#10b981',    // Emerald
 };
 
 export default function Analytics() {
@@ -360,7 +364,7 @@ export default function Analytics() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin text-slate-700 mx-auto mb-2" />
+          <RefreshCw className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" />
           <p className="text-gray-600">Cargando analíticas...</p>
         </div>
       </div>
@@ -387,7 +391,7 @@ export default function Analytics() {
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
             {syncing ? 'Sincronizando...' : 'Sincronizar'}
@@ -397,7 +401,7 @@ export default function Analytics() {
         {/* Filtros de Fecha */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Calendar className="w-5 h-5 text-slate-700" />
+            <Calendar className="w-5 h-5 text-blue-600" />
             <h3 className="text-sm font-semibold text-gray-900">Filtrar por Fecha</h3>
           </div>
           <div className="flex flex-wrap items-end gap-3">
@@ -405,7 +409,7 @@ export default function Analytics() {
               onClick={() => setDateFilter('today')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 dateFilter === 'today'
-                  ? 'bg-slate-900 text-white shadow-md'
+                  ? 'bg-blue-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -415,7 +419,7 @@ export default function Analytics() {
               onClick={() => setDateFilter('week')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 dateFilter === 'week'
-                  ? 'bg-slate-900 text-white shadow-md'
+                  ? 'bg-blue-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -425,7 +429,7 @@ export default function Analytics() {
               onClick={() => setDateFilter('month')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 dateFilter === 'month'
-                  ? 'bg-slate-900 text-white shadow-md'
+                  ? 'bg-blue-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -435,7 +439,7 @@ export default function Analytics() {
               onClick={() => setDateFilter('all')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 dateFilter === 'all'
-                  ? 'bg-slate-900 text-white shadow-md'
+                  ? 'bg-blue-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -445,7 +449,7 @@ export default function Analytics() {
               onClick={() => setDateFilter('custom')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 dateFilter === 'custom'
-                  ? 'bg-slate-900 text-white shadow-md'
+                  ? 'bg-blue-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -460,7 +464,7 @@ export default function Analytics() {
                     type="date"
                     value={customStartDate}
                     onChange={e => setCustomStartDate(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div className="flex items-center gap-2">
@@ -469,7 +473,7 @@ export default function Analytics() {
                     type="date"
                     value={customEndDate}
                     onChange={e => setCustomEndDate(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </>
@@ -482,8 +486,8 @@ export default function Analytics() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-2">
-                <Phone className="w-8 h-8 text-slate-700" />
-                <TrendingUp className="w-5 h-5 text-slate-600" />
+                <Phone className="w-8 h-8 text-blue-600" />
+                <TrendingUp className="w-5 h-5 text-blue-500" />
               </div>
               <p className="text-sm text-gray-500 mb-1">Total Llamadas</p>
               <p className="text-3xl font-bold text-gray-900">{analytics.totalCalls}</p>
@@ -494,7 +498,7 @@ export default function Analytics() {
 
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-2">
-                <Clock className="w-8 h-8 text-slate-700" />
+                <Clock className="w-8 h-8 text-blue-600" />
               </div>
               <p className="text-sm text-gray-500 mb-1">Tiempo Total</p>
               <p className="text-3xl font-bold text-gray-900">
@@ -507,7 +511,7 @@ export default function Analytics() {
 
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-2">
-                <DollarSign className="w-8 h-8 text-slate-700" />
+                <DollarSign className="w-8 h-8 text-blue-600" />
               </div>
               <p className="text-sm text-gray-500 mb-1">Coste Total</p>
               <p className="text-3xl font-bold text-gray-900">
@@ -523,8 +527,8 @@ export default function Analytics() {
 
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-2">
-                <TrendingUp className="w-8 h-8 text-slate-700" />
-                <Target className="w-5 h-5 text-slate-600" />
+                <TrendingUp className="w-8 h-8 text-blue-600" />
+                <Target className="w-5 h-5 text-blue-500" />
               </div>
               <p className="text-sm text-gray-500 mb-1">Tasa de Éxito</p>
               <p className="text-3xl font-bold text-gray-900">
@@ -534,7 +538,7 @@ export default function Analytics() {
                 <select
                   value={selectedMetricId}
                   onChange={(e) => setSelectedMetricId(e.target.value)}
-                  className="w-full text-xs px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+                  className="w-full text-xs px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="default">Llamadas Completadas</option>
                   {getAvailableMetrics().map((metric) => (
@@ -552,7 +556,7 @@ export default function Analytics() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <User className="w-5 h-5 text-slate-700" />
+              <User className="w-5 h-5 text-blue-600" />
               <h3 className="text-sm font-semibold text-gray-900">Filtrar por Agente</h3>
             </div>
             <div className="flex items-center gap-2">
@@ -560,7 +564,7 @@ export default function Analytics() {
               <select
                 value={groupBy}
                 onChange={e => setGroupBy(e.target.value as GroupBy)}
-                className="text-xs px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+                className="text-xs px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="day">Vista Diaria</option>
                 <option value="week">Vista Semanal</option>
@@ -573,7 +577,7 @@ export default function Analytics() {
               onClick={() => setSelectedAgentId('all')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 selectedAgentId === 'all'
-                  ? 'bg-slate-900 text-white shadow-md'
+                  ? 'bg-blue-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -585,7 +589,7 @@ export default function Analytics() {
                 onClick={() => setSelectedAgentId(agent.id)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   selectedAgentId === agent.id
-                    ? 'bg-slate-900 text-white shadow-md'
+                    ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -600,7 +604,7 @@ export default function Analytics() {
           {/* Gráfico de Tendencia de Llamadas */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-slate-700" />
+              <TrendingUp className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-semibold text-gray-900">Tendencia de Llamadas</h3>
             </div>
             <ResponsiveContainer width="100%" height={300}>
@@ -613,7 +617,7 @@ export default function Analytics() {
                   labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
                 />
                 <Legend wrapperStyle={{ fontSize: '12px' }} />
-                <Line type="monotone" dataKey="calls" stroke="#64748b" strokeWidth={2} name="Llamadas" dot={{ fill: '#64748b', r: 4 }} />
+                <Line type="monotone" dataKey="calls" stroke="#3b82f6" strokeWidth={2} name="Llamadas" dot={{ fill: '#3b82f6', r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -621,7 +625,7 @@ export default function Analytics() {
           {/* Gráfico de Costos */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <DollarSign className="w-5 h-5 text-slate-700" />
+              <DollarSign className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-semibold text-gray-900">Costos por Periodo</h3>
             </div>
             <ResponsiveContainer width="100%" height={300}>
@@ -635,7 +639,7 @@ export default function Analytics() {
                   formatter={(value: number) => formatCurrency(value)}
                 />
                 <Legend wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="cost" fill="#64748b" name="Costo (€)" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="cost" fill="#06b6d4" name="Costo (€)" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -643,14 +647,14 @@ export default function Analytics() {
           {/* Gráfico de Tasa de Éxito */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Target className="w-5 h-5 text-slate-700" />
+              <Target className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-semibold text-gray-900">Tasa de Éxito</h3>
             </div>
             <div className="mb-3">
               <select
                 value={selectedMetricId}
                 onChange={(e) => setSelectedMetricId(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+                className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="default">Llamadas Completadas</option>
                 {getAvailableMetrics().map((metric) => (
@@ -689,7 +693,7 @@ export default function Analytics() {
           {/* Gráfico de Duración Media */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Clock className="w-5 h-5 text-slate-700" />
+              <Clock className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-semibold text-gray-900">Duración Media de Llamadas</h3>
             </div>
             <ResponsiveContainer width="100%" height={300}>
@@ -703,7 +707,7 @@ export default function Analytics() {
                   formatter={(value: number) => [`${value} min`, 'Duración Media']}
                 />
                 <Legend wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="avgDurationMin" fill="#64748b" name="Duración Media (min)" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="avgDurationMin" fill="#8b5cf6" name="Duración Media (min)" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -727,8 +731,8 @@ export default function Analytics() {
                   labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
                 />
                 <Legend wrapperStyle={{ fontSize: '12px' }} />
-                <Bar yAxisId="left" dataKey="calls" fill="#64748b" name="Llamadas" radius={[8, 8, 0, 0]} />
-                <Bar yAxisId="right" dataKey="cost" fill="#64748b" name="Costo (€)" radius={[8, 8, 0, 0]} />
+                <Bar yAxisId="left" dataKey="calls" fill="#3b82f6" name="Llamadas" radius={[8, 8, 0, 0]} />
+                <Bar yAxisId="right" dataKey="cost" fill="#10b981" name="Costo (€)" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -783,7 +787,7 @@ export default function Analytics() {
                           <User className="w-5 h-5 text-gray-400 mr-2" />
                           <div>
                             {call.call_type === 'web_call' ? (
-                              <div className="text-sm font-medium text-slate-700">Llamada de prueba</div>
+                              <div className="text-sm font-medium text-blue-600">Llamada de prueba</div>
                             ) : (
                               <>
                                 <div className="text-sm font-medium text-gray-900">
@@ -833,7 +837,7 @@ export default function Analytics() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => setExpandedCallId(expandedCallId === call.id ? null : call.id)}
-                          className="text-slate-700 hover:text-blue-900 flex items-center gap-1"
+                          className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
                         >
                           {expandedCallId === call.id ? '▼' : '▶'} Ver detalles
                         </button>
