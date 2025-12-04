@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, CheckCircle, XCircle, Clock, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Phone, CheckCircle, XCircle, Clock, Edit, Trash2, User, Mail } from 'lucide-react';
 import { getAllPhoneRequests, approvePhoneRequest, rejectPhoneRequest, deletePhoneRequest } from '../services/phoneRequestService';
 import { getClinic } from '../services/clinicService';
-import { PhoneRequest, Clinic } from '../types';
+import { getAgent } from '../services/agentService';
+import { PhoneRequest, Clinic, Agent } from '../types';
 
-interface PhoneRequestWithClinic extends PhoneRequest {
+interface PhoneRequestWithDetails extends PhoneRequest {
   clinic?: Clinic;
+  agent?: Agent;
 }
 
 export default function AdminPanel() {
   const navigate = useNavigate();
-  const [requests, setRequests] = useState<PhoneRequestWithClinic[]>([]);
+  const [requests, setRequests] = useState<PhoneRequestWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
 
@@ -23,15 +25,18 @@ export default function AdminPanel() {
     try {
       const requestsData = await getAllPhoneRequests();
 
-      // Load clinic data for each request
-      const requestsWithClinics = await Promise.all(
+      // Load clinic and agent data for each request
+      const requestsWithDetails = await Promise.all(
         requestsData.map(async (request) => {
-          const clinic = await getClinic(request.clinic_id);
-          return { ...request, clinic };
+          const [clinic, agent] = await Promise.all([
+            getClinic(request.clinic_id),
+            request.agent_id ? getAgent(request.agent_id) : null
+          ]);
+          return { ...request, clinic, agent: agent || undefined };
         })
       );
 
-      setRequests(requestsWithClinics);
+      setRequests(requestsWithDetails);
     } catch (error) {
       console.error('Error loading admin data:', error);
     } finally {
@@ -43,13 +48,25 @@ export default function AdminPanel() {
     const phoneNumber = prompt('Introduce el número de teléfono a asignar (ej: +34612345678):');
     if (!phoneNumber) return;
 
+    const country = prompt('País del número (ej: España):');
+    if (!country) return;
+
+    const costStr = prompt('Costo mensual en euros (ej: 5):');
+    if (!costStr) return;
+    const monthlyCost = parseFloat(costStr);
+    if (isNaN(monthlyCost)) {
+      alert('El costo debe ser un número válido');
+      return;
+    }
+
     const adminNotes = prompt('Notas del administrador (opcional):') || undefined;
 
     try {
-      await approvePhoneRequest(requestId, phoneNumber, adminNotes);
+      await approvePhoneRequest(requestId, phoneNumber, country, monthlyCost, adminNotes);
       await loadData(); // Reload data
+      alert('✅ Solicitud aprobada y teléfono asignado al agente');
     } catch (error) {
-      alert('Error al aprobar la solicitud');
+      alert('Error al aprobar la solicitud: ' + (error instanceof Error ? error.message : 'Error desconocido'));
       console.error(error);
     }
   }
@@ -247,27 +264,51 @@ export default function AdminPanel() {
                         {getStatusLabel(request.status)}
                       </span>
                     </div>
-                    <div className="space-y-1 text-sm text-gray-700">
-                      <p>
-                        <span className="font-medium">Fecha solicitud:</span> {formatDate(request.created_at)}
-                      </p>
-                      {request.request_notes && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2 text-gray-700">
+                          <User className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                          <span className="font-medium">Usuario:</span>
+                          <span>{request.user_name || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-700">
+                          <Mail className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                          <span className="font-medium">Email:</span>
+                          <span className="text-blue-600">{request.user_email || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-700">
+                          <Phone className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                          <span className="font-medium">Agente:</span>
+                          <span>{request.agent?.name || 'N/A'}</span>
+                          {request.agent && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${request.agent.agent_type === 'inbound' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}`}>
+                              {request.agent.agent_type === 'inbound' ? 'Entrante' : 'Saliente'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-2 text-sm text-gray-700">
                         <p>
-                          <span className="font-medium">Notas del usuario:</span> {request.request_notes}
+                          <span className="font-medium">Fecha:</span> {formatDate(request.created_at)}
                         </p>
-                      )}
-                      {request.phone_number && (
-                        <p className="flex items-center gap-1.5">
-                          <Phone className="w-4 h-4 text-blue-600" />
-                          <span className="font-medium">Teléfono asignado:</span>
-                          <span className="text-blue-600">{request.phone_number}</span>
-                        </p>
-                      )}
-                      {request.admin_notes && (
-                        <p>
-                          <span className="font-medium">Notas del admin:</span> {request.admin_notes}
-                        </p>
-                      )}
+                        {request.request_notes && (
+                          <p>
+                            <span className="font-medium">Notas:</span> {request.request_notes}
+                          </p>
+                        )}
+                        {request.phone_number && (
+                          <p className="flex items-center gap-1.5">
+                            <Phone className="w-4 h-4 text-green-600" />
+                            <span className="font-medium">Asignado:</span>
+                            <span className="text-green-600 font-semibold">{request.phone_number}</span>
+                          </p>
+                        )}
+                        {request.admin_notes && (
+                          <p>
+                            <span className="font-medium">Admin:</span> {request.admin_notes}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-2 ml-4">

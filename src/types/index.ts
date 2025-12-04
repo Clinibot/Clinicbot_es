@@ -109,10 +109,27 @@ export interface PhoneRequest {
   id: string;
   clinic_id: string;
   user_id: string;
+  agent_id?: string;
+  user_name?: string;
+  user_email?: string;
   status: 'pending' | 'approved' | 'rejected';
   phone_number?: string;
   request_notes?: string;
   admin_notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PhoneNumber {
+  id: string;
+  clinic_id: string;
+  phone_number: string;
+  country: string;
+  status: 'active' | 'inactive' | 'cancelled';
+  assigned_inbound_agent_id?: string;
+  assigned_outbound_agent_id?: string;
+  monthly_cost?: number;
+  purchased_at: string;
   created_at: string;
   updated_at: string;
 }
