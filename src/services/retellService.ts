@@ -536,9 +536,13 @@ export async function assignPhoneNumberToRetellAgent(
   phoneNumber: string,
   agentId: string
 ): Promise<any> {
-  console.log('=== Assigning Phone Number in Retell AI ===');
-  console.log('Phone Number:', phoneNumber);
-  console.log('Agent ID:', agentId);
+  console.log('╔═══════════════════════════════════════════════════════════╗');
+  console.log('║  🔄 ACTUALIZANDO NÚMERO EN RETELL AI                      ║');
+  console.log('╚═══════════════════════════════════════════════════════════╝');
+  console.log('📞 Phone Number:', phoneNumber);
+  console.log('🤖 Agent ID:', agentId);
+  console.log('🌐 Endpoint:', `https://api.retellai.com/update-phone-number/${encodeURIComponent(phoneNumber)}`);
+  console.log('📤 Payload:', JSON.stringify({ agent_id: agentId }, null, 2));
 
   const response = await fetch(`https://api.retellai.com/update-phone-number/${encodeURIComponent(phoneNumber)}`, {
     method: 'PATCH',
@@ -551,14 +555,30 @@ export async function assignPhoneNumberToRetellAgent(
     }),
   });
 
+  console.log('📥 Response Status:', response.status, response.statusText);
+
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('❌ Retell API error:', errorText);
+    console.error('╔═══════════════════════════════════════════════════════════╗');
+    console.error('║  ❌ ERROR EN RETELL AI                                    ║');
+    console.error('╚═══════════════════════════════════════════════════════════╝');
+    console.error('Status:', response.status);
+    console.error('Status Text:', response.statusText);
+    console.error('Error Response:', errorText);
+    try {
+      const errorJson = JSON.parse(errorText);
+      console.error('Error JSON:', JSON.stringify(errorJson, null, 2));
+    } catch (e) {
+      console.error('Could not parse error as JSON');
+    }
     throw new Error(`Failed to assign phone number in Retell AI: ${response.status} ${errorText}`);
   }
 
   const data = await response.json();
-  console.log('✅ Phone number assigned successfully in Retell AI');
+  console.log('╔═══════════════════════════════════════════════════════════╗');
+  console.log('║  ✅ NÚMERO ASIGNADO EN RETELL AI                          ║');
+  console.log('╚═══════════════════════════════════════════════════════════╝');
+  console.log('Response:', JSON.stringify(data, null, 2));
   return data;
 }
 
