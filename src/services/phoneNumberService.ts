@@ -102,11 +102,48 @@ export async function assignPhoneToAgent(
 
   // Update in Retell AI
   try {
+    // First, verify the phone number exists in Retell AI
+    console.log('Verificando que el número existe en Retell AI...');
+    const { getRetellPhoneNumber } = await import('./retellService');
+
+    try {
+      const retellPhone = await getRetellPhoneNumber(data.phone_number);
+      console.log('✓ Número encontrado en Retell AI:', retellPhone);
+    } catch (phoneError) {
+      console.error('❌ El número no existe en Retell AI:', phoneError);
+      // Rollback Supabase change
+      await supabase
+        .from('phone_numbers')
+        .update({
+          [field]: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', phoneNumberId);
+
+      throw new Error(
+        `❌ El número ${data.phone_number} NO está registrado en Retell AI.\n\n` +
+        '📋 Pasos para solucionar:\n\n' +
+        '1. Ve a tu dashboard de Retell AI: https://dashboard.retellai.com/\n' +
+        '2. Navega a la sección "Phone Numbers"\n' +
+        '3. Verifica que el número esté comprado/registrado ahí\n' +
+        '4. Si no aparece, compra o importa el número desde Retell AI primero\n' +
+        '5. Una vez que el número esté en Retell AI, vuelve aquí y asigna el agente\n\n' +
+        '⚠️ IMPORTANTE: El número debe estar comprado/registrado en Retell AI ANTES de poder asignarlo a un agente.'
+      );
+    }
+
+    // Now assign the agent to the phone number
     await assignPhoneNumberToRetellAgent(data.phone_number, agent.retell_agent_id);
     console.log('✅ Phone assigned successfully in both Supabase and Retell AI');
   } catch (retellError) {
     console.error('❌ Failed to assign phone in Retell AI:', retellError);
-    // Rollback Supabase change
+
+    // If it's already our custom error, re-throw it
+    if (retellError instanceof Error && retellError.message.includes('NO está registrado en Retell AI')) {
+      throw retellError;
+    }
+
+    // Rollback Supabase change for other errors
     await supabase
       .from('phone_numbers')
       .update({
