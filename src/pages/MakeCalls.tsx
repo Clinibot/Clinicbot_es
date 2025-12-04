@@ -323,13 +323,13 @@ export default function MakeCalls() {
                   <div className="flex-1">
                     <h4 className="text-sm font-semibold text-amber-900 mb-1">Sin teléfono asignado</h4>
                     <p className="text-sm text-amber-700 mb-3">
-                      Este agente necesita un número virtual para hacer llamadas.
+                      Este agente necesita un número virtual para hacer llamadas. Ve a Gestionar Teléfonos para asignar un número o solicitar uno nuevo.
                     </p>
                     <button
                       onClick={() => navigate(`/clinic/${clinicId}/phones`)}
                       className="text-sm px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
                     >
-                      Solicitar Teléfono Virtual
+                      Gestionar Teléfonos
                     </button>
                   </div>
                 </div>
