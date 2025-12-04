@@ -330,7 +330,7 @@ export default function AgentDetail() {
             }`}
           >
             <MessageSquare className="w-5 h-5" />
-            Playground
+            Prueba a tu agente
           </button>
           <button
             onClick={() => setActiveTab('transfers')}

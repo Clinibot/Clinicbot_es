@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, Upload, Users, CheckCircle, AlertCircle, Play } from 'lucide-react';
+import { ArrowLeft, Phone, Upload, Users, CheckCircle, AlertCircle, Play, PhoneOff } from 'lucide-react';
 import { getClinic } from '../services/clinicService';
 import { getClinicAgents } from '../services/agentService';
 import { createBatchCalls } from '../services/batchCallsService';
-import { Agent, Clinic } from '../types';
+import { getAgentPhoneNumber } from '../services/phoneNumberService';
+import { Agent, Clinic, PhoneNumber } from '../types';
 
 interface CallRecipient {
   phone: string;
@@ -20,6 +21,8 @@ export default function MakeCalls() {
 
   // Paso 1: Selección de agente
   const [selectedAgentId, setSelectedAgentId] = useState<string>('');
+  const [selectedAgentPhone, setSelectedAgentPhone] = useState<PhoneNumber | null>(null);
+  const [loadingPhone, setLoadingPhone] = useState(false);
 
   // Paso 2: Lista de contactos
   const [contacts, setContacts] = useState<CallRecipient[]>([]);
@@ -32,6 +35,14 @@ export default function MakeCalls() {
   useEffect(() => {
     loadData();
   }, [clinicId]);
+
+  useEffect(() => {
+    if (selectedAgentId) {
+      loadAgentPhone(selectedAgentId);
+    } else {
+      setSelectedAgentPhone(null);
+    }
+  }, [selectedAgentId]);
 
   async function loadData() {
     if (!clinicId) return;
@@ -54,6 +65,19 @@ export default function MakeCalls() {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadAgentPhone(agentId: string) {
+    setLoadingPhone(true);
+    try {
+      const phoneNumber = await getAgentPhoneNumber(agentId, 'outbound');
+      setSelectedAgentPhone(phoneNumber);
+    } catch (error) {
+      console.error('Error loading agent phone:', error);
+      setSelectedAgentPhone(null);
+    } finally {
+      setLoadingPhone(false);
     }
   }
 
@@ -121,11 +145,12 @@ export default function MakeCalls() {
   }
 
   async function handleExecute() {
-    if (!selectedAgentId || contacts.length === 0 || !clinicId) return;
+    if (!selectedAgentId || contacts.length === 0 || !clinicId || !selectedAgentPhone) return;
 
     const confirmed = confirm(
       `¿Iniciar ${contacts.length} llamada${contacts.length > 1 ? 's' : ''}?\n\n` +
       `Agente: ${agents.find(a => a.id === selectedAgentId)?.name}\n` +
+      `Número saliente: ${selectedAgentPhone.phone_number}\n` +
       `Contactos: ${contacts.length}\n\n` +
       `Las llamadas comenzarán inmediatamente.`
     );
@@ -163,7 +188,7 @@ export default function MakeCalls() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
           <p className="text-gray-600">Cargando...</p>
         </div>
       </div>
@@ -190,7 +215,7 @@ export default function MakeCalls() {
             </p>
             <button
               onClick={() => navigate(`/clinic/${clinicId}/create-agent`)}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              className="px-6 py-3 bg-gray-50 text-gray-900 font-semibold rounded-lg border-2 border-blue-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow hover:shadow-md"
             >
               Crear Agente Saliente
             </button>
@@ -221,9 +246,9 @@ export default function MakeCalls() {
         </div>
 
         {/* Instrucciones simples */}
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-6 mb-6">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-6">
           <div className="flex items-start gap-3">
-            <CheckCircle className="w-6 h-6 text-purple-600 mt-1 flex-shrink-0" />
+            <CheckCircle className="w-6 h-6 text-blue-600 mt-1 flex-shrink-0" />
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Muy fácil en 3 pasos:</h3>
               <ol className="space-y-1 text-sm text-gray-700">
@@ -236,10 +261,10 @@ export default function MakeCalls() {
         </div>
 
         {/* Paso 1: Seleccionar Agente */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">
+              <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
                 1
               </div>
               <h2 className="text-xl font-semibold text-gray-900">Elige el Agente</h2>
@@ -255,32 +280,70 @@ export default function MakeCalls() {
                   onClick={() => setSelectedAgentId(agent.id)}
                   className={`p-4 rounded-lg border-2 transition-all text-left ${
                     selectedAgentId === agent.id
-                      ? 'border-purple-600 bg-purple-50'
-                      : 'border-gray-200 hover:border-purple-300'
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'border-gray-200 hover:border-blue-300'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Phone className={`w-5 h-5 ${selectedAgentId === agent.id ? 'text-purple-600' : 'text-gray-400'}`} />
+                    <Phone className={`w-5 h-5 ${selectedAgentId === agent.id ? 'text-blue-600' : 'text-gray-400'}`} />
                     <div>
                       <div className="font-semibold text-gray-900">{agent.name}</div>
                       <div className="text-xs text-gray-500">Agente saliente</div>
                     </div>
                     {selectedAgentId === agent.id && (
-                      <CheckCircle className="w-5 h-5 text-purple-600 ml-auto" />
+                      <CheckCircle className="w-5 h-5 text-blue-600 ml-auto" />
                     )}
                   </div>
                 </button>
               ))}
             </div>
           </div>
+
+          {/* Mostrar teléfono asignado o solicitar */}
+          {selectedAgentId && (
+            <div className="p-6 bg-gray-50 border-t border-gray-200">
+              {loadingPhone ? (
+                <div className="text-center py-4">
+                  <div className="w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <p className="text-sm text-gray-600">Verificando teléfono...</p>
+                </div>
+              ) : selectedAgentPhone ? (
+                <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-lg p-4">
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-green-900 mb-1">Teléfono asignado</h4>
+                    <p className="text-sm text-green-700">
+                      Las llamadas se harán desde: <strong className="font-mono">{selectedAgentPhone.phone_number}</strong> ({selectedAgentPhone.country})
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <PhoneOff className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-amber-900 mb-1">Sin teléfono asignado</h4>
+                    <p className="text-sm text-amber-700 mb-3">
+                      Este agente necesita un número virtual para hacer llamadas.
+                    </p>
+                    <button
+                      onClick={() => navigate(`/clinic/${clinicId}/phones`)}
+                      className="text-sm px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
+                    >
+                      Solicitar Teléfono Virtual
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Paso 2: Subir Contactos */}
-        {selectedAgentId && (
-          <div className="bg-white rounded-lg shadow mb-6">
+        {selectedAgentId && selectedAgentPhone && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">
+                <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
                   2
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900">Añade tus Clientes</h2>
@@ -298,8 +361,8 @@ export default function MakeCalls() {
                     onChange={handleFileUpload}
                     className="hidden"
                   />
-                  <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all text-center">
-                    <Upload className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                  <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all text-center">
+                    <Upload className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                     <div className="font-semibold text-gray-900">Subir archivo CSV</div>
                     <div className="text-xs text-gray-500">Formato: teléfono, nombre</div>
                   </div>
@@ -307,9 +370,9 @@ export default function MakeCalls() {
 
                 <button
                   onClick={handleManualAdd}
-                  className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all"
+                  className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all"
                 >
-                  <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                  <Users className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                   <div className="font-semibold text-gray-900">Añadir uno por uno</div>
                   <div className="text-xs text-gray-500">Introduce manualmente</div>
                 </button>
@@ -384,11 +447,11 @@ export default function MakeCalls() {
         )}
 
         {/* Paso 3: Ejecutar */}
-        {selectedAgentId && contacts.length > 0 && (
-          <div className="bg-white rounded-lg shadow">
+        {selectedAgentId && selectedAgentPhone && contacts.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">
+                <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
                   3
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900">Iniciar Llamadas</h2>
@@ -401,6 +464,7 @@ export default function MakeCalls() {
                     <h4 className="font-semibold text-gray-900 mb-2">Todo listo!</h4>
                     <div className="space-y-1 text-sm text-gray-700">
                       <p>✓ Agente: <strong>{agents.find(a => a.id === selectedAgentId)?.name}</strong></p>
+                      <p>✓ Desde: <strong className="font-mono">{selectedAgentPhone.phone_number}</strong></p>
                       <p>✓ Contactos: <strong>{contacts.length} persona{contacts.length > 1 ? 's' : ''}</strong></p>
                     </div>
                   </div>
@@ -422,7 +486,7 @@ export default function MakeCalls() {
               <button
                 onClick={handleExecute}
                 disabled={executing}
-                className="w-full py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg flex items-center justify-center gap-2"
+                className="w-full py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
               >
                 {executing ? (
                   <>
