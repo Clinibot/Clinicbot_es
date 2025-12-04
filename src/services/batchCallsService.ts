@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { getAgent } from './agentService';
+import { getClinic } from './clinicService';
 
 interface CallRecipient {
   phone: string;
@@ -14,19 +15,28 @@ export async function createBatchCalls(
   recipients: CallRecipient[]
 ): Promise<void> {
   try {
-    // Obtener el agente usando el servicio existente
-    const agent = await getAgent(agentId);
+    // Obtener el agente y la clínica
+    const [agent, clinic] = await Promise.all([
+      getAgent(agentId),
+      getClinic(clinicId)
+    ]);
 
     if (!agent || !agent.retell_agent_id) {
       throw new Error('Agente no encontrado');
     }
 
+    if (!clinic || !clinic.phone) {
+      throw new Error('La clínica no tiene un número de teléfono configurado');
+    }
+
     const retellAgentId = agent.retell_agent_id;
+    const fromNumber = clinic.phone;
 
     // Crear las llamadas una por una usando Retell AI
     const callPromises = recipients.map(async (recipient) => {
       const callPayload = {
         agent_id: retellAgentId,
+        from_number: fromNumber,
         to_number: recipient.phone,
         // Variables dinámicas que pueden usarse en el prompt
         retell_llm_dynamic_variables: {
