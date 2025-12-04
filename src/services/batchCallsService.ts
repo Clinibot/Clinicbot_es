@@ -1,14 +1,12 @@
+import { supabase } from '../lib/supabase';
+import { getAgent } from './agentService';
+
 interface CallRecipient {
   phone: string;
   name?: string;
 }
 
-interface CreateCallPayload {
-  from_number: string;
-  to_number: string;
-  override_agent_id?: string;
-  retell_llm_dynamic_variables?: Record<string, any>;
-}
+const RETELL_API_KEY = import.meta.env.VITE_RETELL_API_KEY;
 
 export async function createBatchCalls(
   clinicId: string,
@@ -16,24 +14,14 @@ export async function createBatchCalls(
   recipients: CallRecipient[]
 ): Promise<void> {
   try {
-    // Obtener el retell_agent_id del agente
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/agents?id=eq.${agentId}&select=retell_agent_id`, {
-      headers: {
-        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      },
-    });
+    // Obtener el agente usando el servicio existente
+    const agent = await getAgent(agentId);
 
-    if (!response.ok) {
-      throw new Error('No se pudo obtener información del agente');
-    }
-
-    const agents = await response.json();
-    if (!agents || agents.length === 0) {
+    if (!agent || !agent.retell_agent_id) {
       throw new Error('Agente no encontrado');
     }
 
-    const retellAgentId = agents[0].retell_agent_id;
+    const retellAgentId = agent.retell_agent_id;
 
     // Crear las llamadas una por una usando Retell AI
     const callPromises = recipients.map(async (recipient) => {
@@ -49,7 +37,7 @@ export async function createBatchCalls(
       const callResponse = await fetch('https://api.retellai.com/v2/create-phone-call', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_RETELL_API_KEY}`,
+          'Authorization': `Bearer ${RETELL_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(callPayload),
