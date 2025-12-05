@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Phone, Upload, Users, CheckCircle, AlertCircle, Play, PhoneOff } from 'lucide-react';
+import { ArrowLeft, Phone, Upload, Users, CheckCircle, AlertCircle, Play, PhoneOff, X, Calendar } from 'lucide-react';
 import { getClinic } from '../services/clinicService';
 import { getClinicAgents } from '../services/agentService';
 import { createBatchCalls } from '../services/batchCallsService';
@@ -32,6 +32,13 @@ export default function MakeCalls() {
   // Paso 3: Ejecución
   const [executing, setExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Modal de campaña
+  const [showCampaignModal, setShowCampaignModal] = useState(false);
+  const [saveCampaign, setSaveCampaign] = useState(false);
+  const [campaignName, setCampaignName] = useState('');
+  const [campaignDescription, setCampaignDescription] = useState('');
+  const [scheduledDate, setScheduledDate] = useState('');
 
   useEffect(() => {
     loadData();
@@ -145,47 +152,35 @@ export default function MakeCalls() {
     setContacts(contacts.filter((_, i) => i !== index));
   }
 
-  async function handleExecute() {
+  function handleExecute() {
+    if (!selectedAgentId || contacts.length === 0 || !clinicId || !selectedAgentPhone) return;
+    setShowCampaignModal(true);
+  }
+
+  function closeCampaignModal() {
+    setShowCampaignModal(false);
+    setSaveCampaign(false);
+    setCampaignName('');
+    setCampaignDescription('');
+    setScheduledDate('');
+  }
+
+  async function confirmAndExecute() {
     if (!selectedAgentId || contacts.length === 0 || !clinicId || !selectedAgentPhone) return;
 
-    // Preguntar si quiere guardar como campaña
-    const saveCampaign = confirm(
-      `¿Quieres guardar esto como una campaña reutilizable?\n\n` +
-      `Si guardas como campaña, podrás:\n` +
-      `• Ver el historial de ejecuciones\n` +
-      `• Relanzarla con nuevos contactos en el futuro\n` +
-      `• Programarla para otra fecha\n\n` +
-      `¿Guardar como campaña?`
-    );
-
-    let campaignName = '';
-    let campaignDescription = '';
-
-    if (saveCampaign) {
-      campaignName = prompt('Nombre de la campaña (ej: "Recordatorio limpieza bucal"):') || '';
-      if (!campaignName.trim()) {
-        alert('❌ El nombre de la campaña es obligatorio');
-        return;
-      }
-      campaignDescription = prompt('Descripción (opcional):') || '';
+    // Validar nombre de campaña si está activado
+    if (saveCampaign && !campaignName.trim()) {
+      alert('❌ El nombre de la campaña es obligatorio');
+      return;
     }
 
-    const confirmed = confirm(
-      `¿Iniciar ${contacts.length} llamada${contacts.length > 1 ? 's' : ''}?\n\n` +
-      `Agente: ${agents.find(a => a.id === selectedAgentId)?.name}\n` +
-      `Número saliente: ${selectedAgentPhone.phone_number}\n` +
-      `Contactos: ${contacts.length}\n` +
-      (saveCampaign ? `Campaña: "${campaignName}"\n` : '') +
-      `\nLas llamadas comenzarán inmediatamente.`
-    );
-
-    if (!confirmed) return;
-
+    setShowCampaignModal(false);
     setExecuting(true);
     setExecutionResult(null);
 
     try {
       let campaignId: string | undefined;
+      const scheduledForDate = scheduledDate ? new Date(scheduledDate) : undefined;
 
       // Si quiere guardar como campaña, crearla primero
       if (saveCampaign && campaignName) {
@@ -198,16 +193,20 @@ export default function MakeCalls() {
         campaignId = campaign.id;
 
         // Crear la ejecución de la campaña
-        await createCampaignExecution(campaignId, contacts);
+        await createCampaignExecution(campaignId, contacts, scheduledForDate);
       }
 
-      // Ejecutar las llamadas
-      await createBatchCalls(clinicId, selectedAgentId, contacts);
+      // Ejecutar las llamadas (solo si no está programada)
+      if (!scheduledForDate) {
+        await createBatchCalls(clinicId, selectedAgentId, contacts);
+      }
 
       setExecutionResult({
         success: true,
         message: saveCampaign
-          ? `✅ Campaña "${campaignName}" guardada y ${contacts.length} llamada${contacts.length > 1 ? 's iniciadas' : ' iniciada'}`
+          ? scheduledForDate
+            ? `✅ Campaña "${campaignName}" creada y programada para ${new Date(scheduledDate).toLocaleString('es-ES')}`
+            : `✅ Campaña "${campaignName}" guardada y ${contacts.length} llamada${contacts.length > 1 ? 's iniciadas' : ' iniciada'}`
           : `✅ Se han iniciado ${contacts.length} llamada${contacts.length > 1 ? 's' : ''} correctamente`,
       });
 
@@ -215,6 +214,7 @@ export default function MakeCalls() {
       setTimeout(() => {
         setContacts([]);
         setExecutionResult(null);
+        closeCampaignModal();
         if (saveCampaign) {
           // Navegar a campañas para ver la nueva campaña
           navigate(`/clinic/${clinicId}/campaigns`);
@@ -554,6 +554,135 @@ export default function MakeCalls() {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Configuración de Campaña */}
+        {showCampaignModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900">Configurar Llamadas</h2>
+                <button
+                  onClick={closeCampaignModal}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 space-y-6">
+                {/* Resumen */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-blue-900 mb-2">Resumen</h3>
+                  <div className="space-y-1 text-sm text-blue-800">
+                    <p>• Agente: <strong>{agents.find(a => a.id === selectedAgentId)?.name}</strong></p>
+                    <p>• Desde: <strong className="font-mono">{selectedAgentPhone?.phone_number}</strong></p>
+                    <p>• Contactos: <strong>{contacts.length} persona{contacts.length > 1 ? 's' : ''}</strong></p>
+                  </div>
+                </div>
+
+                {/* Guardar como campaña */}
+                <div className="space-y-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={saveCampaign}
+                      onChange={(e) => setSaveCampaign(e.target.checked)}
+                      className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                    />
+                    <div>
+                      <div className="font-semibold text-gray-900">Guardar como campaña</div>
+                      <div className="text-sm text-gray-600">
+                        Podrás reutilizarla, ver historial y programarla para el futuro
+                      </div>
+                    </div>
+                  </label>
+
+                  {saveCampaign && (
+                    <div className="pl-8 space-y-4 border-l-2 border-purple-200">
+                      {/* Nombre de campaña */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Nombre de la campaña <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={campaignName}
+                          onChange={(e) => setCampaignName(e.target.value)}
+                          placeholder="Ej: Recordatorio limpieza bucal Q1 2025"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        />
+                      </div>
+
+                      {/* Descripción */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Descripción (opcional)
+                        </label>
+                        <textarea
+                          value={campaignDescription}
+                          onChange={(e) => setCampaignDescription(e.target.value)}
+                          placeholder="Describe el objetivo de esta campaña..."
+                          rows={3}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                        />
+                      </div>
+
+                      {/* Programar fecha */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Programar para fecha/hora (opcional)
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-5 h-5 text-gray-400" />
+                          <input
+                            type="datetime-local"
+                            value={scheduledDate}
+                            onChange={(e) => setScheduledDate(e.target.value)}
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                        </div>
+                        {scheduledDate && (
+                          <p className="text-sm text-purple-600 mt-2">
+                            ⏰ Las llamadas se realizarán el {new Date(scheduledDate).toLocaleString('es-ES')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+                <button
+                  onClick={closeCampaignModal}
+                  className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmAndExecute}
+                  disabled={executing}
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center gap-2"
+                >
+                  {scheduledDate ? (
+                    <>
+                      <Calendar className="w-4 h-4" />
+                      Programar Campaña
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4" />
+                      Iniciar Ahora
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         )}
